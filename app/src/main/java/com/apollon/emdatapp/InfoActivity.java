@@ -34,12 +34,6 @@ import java.util.Map;
 
 public class InfoActivity extends AppCompatActivity {
 
-    private static final int REQUEST_ACCESS_COARSE_LOCATION = 0;
-    private static final int REQUEST_READ_PHONE_STATE = 0;
-    private static final int REQUEST_ACCESS_WIFI_STATE = 0;
-    final private int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 124;
-    public static String LOG_TAG = "CustomPhoneStateListener";
-
     TelephonyManager telephonyManager;
     TextView dbm;
     TextView network;
@@ -66,83 +60,18 @@ public class InfoActivity extends AppCompatActivity {
         wifisignal = findViewById(R.id.wifi);
         carrier = findViewById(R.id.carrier);
 
-        List<String> permissionsNeeded = new ArrayList<String>();
-
-        final List<String> permissionsList = new ArrayList<String>();
-        if (!addPermission(permissionsList, Manifest.permission.ACCESS_COARSE_LOCATION))
-            permissionsNeeded.add("GPS");
-        if (!addPermission(permissionsList, Manifest.permission.READ_PHONE_STATE))
-            permissionsNeeded.add("Phone State");
-        if (!addPermission(permissionsList, Manifest.permission.ACCESS_WIFI_STATE))
-            permissionsNeeded.add("WiFi State");
-
-        if (permissionsList.size() > 0) {
-            if (permissionsNeeded.size() > 0) {
-                // Need Rationale
-                String message = "You need to grant access to " + permissionsNeeded.get(0);
-                for (int i = 1; i < permissionsNeeded.size(); i++)
-                    message = message + ", " + permissionsNeeded.get(i);
-                showMessageOKCancel(message,
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                requestPermissions(permissionsList.toArray(new String[permissionsList.size()]),
-                                        REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS);
-                            }
-                        });
-                return;
-            }
-            requestPermissions(permissionsList.toArray(new String[permissionsList.size()]),
-                    REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS);
-            return;
-        }
+        updateSignals();
     }
 
     public void updateSignals() {
-        if (ContextCompat.checkSelfPermission(InfoActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(InfoActivity.this, Manifest.permission.READ_PHONE_STATE)
-                == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(InfoActivity.this, Manifest.permission.ACCESS_WIFI_STATE)
-                == PackageManager.PERMISSION_GRANTED) {
-            telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-            //telephonyManager.listen(new CustomPhoneStateListener(this),
-            //        PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
-            int strengthDbm = 0;
+        if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED &&
+                checkSelfPermission(Manifest.permission.ACCESS_WIFI_STATE) == PackageManager.PERMISSION_GRANTED) {
 
             myPhoneStateListener psListener = new myPhoneStateListener();
+
+            telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
             telephonyManager.listen(psListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
-
-            try {
-                if (telephonyManager.getAllCellInfo() != null) {
-                    /*for (final CellInfo info : telephonyManager.getAllCellInfo()) {
-                        if (info instanceof CellInfoGsm) {
-                            final CellSignalStrengthGsm gsm = ((CellInfoGsm) info).getCellSignalStrength();
-                            // do what you need
-
-                            strengthDbm = gsm.getDbm();
-                            network.setText("GSM");
-                        } else if (info instanceof CellInfoCdma) {
-                            final CellSignalStrengthCdma cdma = ((CellInfoCdma) info).getCellSignalStrength();
-                            // do what you need
-                            strengthDbm = cdma.getDbm();
-                            network.setText("CDMA");
-                        } else if (info instanceof CellInfoLte) {
-                            final CellSignalStrengthLte lte = ((CellInfoLte) info).getCellSignalStrength();
-                            // do what you need
-                            strengthDbm = lte.getDbm();
-                            network.setText("LTE");
-                        } else {
-                            throw new Exception("Unknown type of cell signal!");
-                        }
-                    }*/
-                } else {
-                    dbm.setText("ehi" + telephonyManager.getCellLocation().toString());
-                }
-
-            } catch (Exception e) {
-                Log.e("InfoActivity", "Unable to obtain cell signal information", e);
-            }
 
             String IMEINumber = telephonyManager.getDeviceId();
             String subscriberID = telephonyManager.getDeviceId();
@@ -158,7 +87,6 @@ public class InfoActivity extends AppCompatActivity {
             int signal = wifiInfo.getRssi();
             String wifi = String.valueOf(signal);
 
-            //dbm.setText(Integer.toString(strengthDbm));
             deviceid.setText(subscriberID);
             simserial.setText(SIMSerialNumber);
             networkcountry.setText(networkCountryISO);
@@ -169,71 +97,6 @@ public class InfoActivity extends AppCompatActivity {
         }
     }
 
-    public boolean checkPermissions() {
-        if (ContextCompat.checkSelfPermission(InfoActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            return false;
-        }
-        if (ContextCompat.checkSelfPermission(InfoActivity.this, Manifest.permission.READ_PHONE_STATE)
-                != PackageManager.PERMISSION_GRANTED) {
-            return false;
-        }
-        if (ContextCompat.checkSelfPermission(InfoActivity.this, Manifest.permission.ACCESS_WIFI_STATE)
-                != PackageManager.PERMISSION_GRANTED) {
-            return false;
-        }
-        return true;
-    }
-
-    private boolean addPermission(List<String> permissionsList, String permission) {
-        if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
-            permissionsList.add(permission);
-            // Check for Rationale Option
-            if (!shouldShowRequestPermissionRationale(permission))
-                return false;
-        }
-        return true;
-    }
-
-    private void showMessageOKCancel(String message, DialogInterface.OnClickListener okListener) {
-        new AlertDialog.Builder(InfoActivity.this)
-                .setMessage(message)
-                .setPositiveButton("OK", okListener)
-                .setNegativeButton("Cancel", null)
-                .create()
-                .show();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS:
-            {
-                Map<String, Integer> perms = new HashMap<>();
-                // Initial
-                perms.put(Manifest.permission.ACCESS_FINE_LOCATION, PackageManager.PERMISSION_GRANTED);
-                perms.put(Manifest.permission.READ_CONTACTS, PackageManager.PERMISSION_GRANTED);
-                perms.put(Manifest.permission.WRITE_CONTACTS, PackageManager.PERMISSION_GRANTED);
-                // Fill with results
-                for (int i = 0; i < permissions.length; i++)
-                    perms.put(permissions[i], grantResults[i]);
-                // Check for ACCESS_FINE_LOCATION
-                if (perms.get(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                        && perms.get(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
-                        && perms.get(Manifest.permission.WRITE_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-                    // All Permissions Granted
-                    updateSignals();
-                } else {
-                    // Permission Denied
-                    Toast.makeText(InfoActivity.this, "Some Permission is Denied", Toast.LENGTH_SHORT)
-                            .show();
-                }
-            }
-            break;
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
-    }
 
     public class myPhoneStateListener extends PhoneStateListener {
         public int signalStrengthValue;
@@ -276,6 +139,7 @@ public class InfoActivity extends AppCompatActivity {
                                         + mthd.invoke(signalStrength));*/
                         if(mthd.getName().equals("getLteRsrp")) {
                             dbm.setText(mthd.invoke(signalStrength).toString());
+                            network.setText("LTE");
                         }
                     }
                 }
