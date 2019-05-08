@@ -49,6 +49,8 @@ public class InfoActivity extends AppCompatActivity {
     TextView wifisignal;
     TextView carrier;
 
+    private final String LOG_TAG = "onsignalchange";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,25 +109,18 @@ public class InfoActivity extends AppCompatActivity {
         @Override
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
             super.onSignalStrengthsChanged(signalStrength);
-            /*Log.i(LOG_TAG, "onSignalStrengthsChanged: " + signalStrength);
+            Log.i(LOG_TAG, "1onSignalStrengthsChanged: " + signalStrength);
             if (signalStrength.isGsm()) {
-                Log.i(LOG_TAG, "onSignalStrengthsChanged: getGsmBitErrorRate "
+                Log.i(LOG_TAG, "2onSignalStrengthsChanged: getGsmBitErrorRate "
                         + signalStrength.getGsmBitErrorRate());
-                Log.i(LOG_TAG, "onSignalStrengthsChanged: getGsmSignalStrength "
+                Log.i(LOG_TAG, "3onSignalStrengthsChanged: getGsmSignalStrength "
                         + signalStrength.getGsmSignalStrength());
             } else if (signalStrength.getCdmaDbm() > 0) {
-                Log.i(LOG_TAG, "onSignalStrengthsChanged: getCdmaDbm "
+                Log.i(LOG_TAG, "4onSignalStrengthsChanged: getCdmaDbm "
                         + signalStrength.getCdmaDbm());
-                Log.i(LOG_TAG, "onSignalStrengthsChanged: getCdmaEcio "
+                Log.i(LOG_TAG, "5onSignalStrengthsChanged: getCdmaEcio "
                         + signalStrength.getCdmaEcio());
-            } else {
-                Log.i(LOG_TAG, "onSignalStrengthsChanged: getEvdoDbm "
-                        + signalStrength.getEvdoDbm());
-                Log.i(LOG_TAG, "onSignalStrengthsChanged: getEvdoEcio "
-                        + signalStrength.getEvdoEcio());
-                Log.i(LOG_TAG, "onSignalStrengthsChanged: getEvdoSnr "
-                        + signalStrength.getEvdoSnr());
-            }*/
+            }
 
             // Reflection code starts from here
             try {
@@ -137,13 +132,13 @@ public class InfoActivity extends AppCompatActivity {
                             || mthd.getName().equals("getLteRsrq")
                             || mthd.getName().equals("getLteRssnr")
                             || mthd.getName().equals("getLteCqi")) {
-                        /*Log.i(LOG_TAG,
-                                "onSignalStrengthsChanged: " + mthd.getName() + " "
-                                        + mthd.invoke(signalStrength));*/
-                        if(mthd.getName().equals("getLteRsrp")) {
+                        Log.i(LOG_TAG,
+                                "9onSignalStrengthsChanged: " + mthd.getName() + " "
+                                        + mthd.invoke(signalStrength));
+                        /*if(mthd.getName().equals("getLteRsrp")) {
                             dbm.setText(mthd.invoke(signalStrength).toString());
                             network.setText("LTE");
-                        }
+                        }*/
                     }
                 }
             } catch (SecurityException e) {
