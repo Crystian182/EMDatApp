@@ -89,7 +89,7 @@ public class InfoActivity extends AppCompatActivity {
             int signal = wifiInfo.getRssi();
 
             String wifi = String.valueOf(signal);
-            
+
             simserial.setText(SIMSerialNumber);
             networkcountry.setText(networkCountryISO);
             simcountry.setText(SIMCountryISO);
