@@ -40,14 +40,19 @@ import java.util.Map;
 public class InfoActivity extends AppCompatActivity {
 
     TelephonyManager telephonyManager;
-    TextView dbm;
-    TextView network;
-    TextView simserial;
-    TextView networkcountry;
-    TextView simcountry;
     TextView imei;
-    TextView wifisignal;
-    TextView carrier;
+    TextView tipoReteCellulare;
+    TextView bitErrorRate;
+    TextView potenzaSegnale;
+    TextView serialeSim;
+    TextView networkCountry;
+    TextView simCountry;
+    TextView operatore;
+    TextView potenzaSegnaleDati;
+    TextView tipoReteDati;
+    TextView asu;
+    TextView wifi;
+
 
     private final String LOG_TAG = "onsignalchange";
 
@@ -56,14 +61,18 @@ public class InfoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info);
 
-        dbm = findViewById(R.id.signal);
-        network = findViewById(R.id.network);
-        simserial = findViewById(R.id.simserial);
-        networkcountry = findViewById(R.id.networkcountry);
-        simcountry = findViewById(R.id.simcountry);
         imei = findViewById(R.id.imei);
-        wifisignal = findViewById(R.id.wifi);
-        carrier = findViewById(R.id.carrier);
+        tipoReteCellulare = findViewById(R.id.tipoReteCellulare);
+        bitErrorRate = findViewById(R.id.bitErrorRate);
+        potenzaSegnale = findViewById(R.id.potenzaSegnale);
+        serialeSim = findViewById(R.id.serialeSim);
+        networkCountry = findViewById(R.id.networkCountry);
+        simCountry = findViewById(R.id.simCountry);
+        operatore = findViewById(R.id.operatore);
+        potenzaSegnaleDati = findViewById(R.id.potenzaSegnaleDati);
+        tipoReteDati = findViewById(R.id.tipoReteDati);
+        asu = findViewById(R.id.asu);
+        wifi = findViewById(R.id.wifi);
 
         updateSignals();
     }
@@ -90,14 +99,14 @@ public class InfoActivity extends AppCompatActivity {
             //int level = WifiManager.calculateSignalLevel(wifiInfo.getRssi(), numberOfLevels);
             int signal = wifiInfo.getRssi();
 
-            String wifi = String.valueOf(signal);
+            String wifidbm = String.valueOf(signal);
 
-            simserial.setText(SIMSerialNumber);
-            networkcountry.setText(networkCountryISO);
-            simcountry.setText(SIMCountryISO);
+            serialeSim.setText(SIMSerialNumber);
+            networkCountry.setText(networkCountryISO);
+            simCountry.setText(SIMCountryISO);
             imei.setText(IMEINumber);
-            wifisignal.setText(wifi);
-            carrier.setText(carrierName);
+            wifi.setText(wifidbm);
+            operatore.setText(carrierName);
 
         }
     }
@@ -111,11 +120,17 @@ public class InfoActivity extends AppCompatActivity {
             super.onSignalStrengthsChanged(signalStrength);
             Log.i(LOG_TAG, "1onSignalStrengthsChanged: " + signalStrength);
             if (signalStrength.isGsm()) {
+                tipoReteCellulare.setText("GSM");
+                bitErrorRate.setText(String.valueOf(signalStrength.getGsmBitErrorRate()));
+                potenzaSegnale.setText(String.valueOf(signalStrength.getGsmSignalStrength()));
                 Log.i(LOG_TAG, "2onSignalStrengthsChanged: getGsmBitErrorRate "
                         + signalStrength.getGsmBitErrorRate());
                 Log.i(LOG_TAG, "3onSignalStrengthsChanged: getGsmSignalStrength "
                         + signalStrength.getGsmSignalStrength());
             } else if (signalStrength.getCdmaDbm() > 0) {
+                tipoReteCellulare.setText("CDMA");
+                bitErrorRate.setText("-");
+                potenzaSegnale.setText(String.valueOf(signalStrength.getCdmaDbm()));
                 Log.i(LOG_TAG, "4onSignalStrengthsChanged: getCdmaDbm "
                         + signalStrength.getCdmaDbm());
                 Log.i(LOG_TAG, "5onSignalStrengthsChanged: getCdmaEcio "
@@ -135,10 +150,10 @@ public class InfoActivity extends AppCompatActivity {
                         Log.i(LOG_TAG,
                                 "9onSignalStrengthsChanged: " + mthd.getName() + " "
                                         + mthd.invoke(signalStrength));
-                        /*if(mthd.getName().equals("getLteRsrp")) {
-                            dbm.setText(mthd.invoke(signalStrength).toString());
-                            network.setText("LTE");
-                        }*/
+                        if(mthd.getName().equals("getLteRsrp")) {
+                            potenzaSegnaleDati.setText(mthd.invoke(signalStrength).toString());
+                            tipoReteDati.setText("LTE");
+                        }
                     }
                 }
             } catch (SecurityException e) {
