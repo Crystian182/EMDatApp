@@ -27,6 +27,11 @@ import android.widget.Toast;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +42,6 @@ public class InfoActivity extends AppCompatActivity {
     TelephonyManager telephonyManager;
     TextView dbm;
     TextView network;
-    TextView deviceid;
     TextView simserial;
     TextView networkcountry;
     TextView simcountry;
@@ -54,7 +58,6 @@ public class InfoActivity extends AppCompatActivity {
 
         dbm = findViewById(R.id.signal);
         network = findViewById(R.id.network);
-        deviceid = findViewById(R.id.deviceid);
         simserial = findViewById(R.id.simserial);
         networkcountry = findViewById(R.id.networkcountry);
         simcountry = findViewById(R.id.simcountry);
@@ -76,7 +79,6 @@ public class InfoActivity extends AppCompatActivity {
             telephonyManager.listen(psListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
 
             String IMEINumber = telephonyManager.getDeviceId();
-            String subscriberID = telephonyManager.getDeviceId();
             String SIMSerialNumber = telephonyManager.getSimSerialNumber();
             String networkCountryISO = telephonyManager.getNetworkCountryIso();
             String SIMCountryISO = telephonyManager.getSimCountryIso();
@@ -87,15 +89,16 @@ public class InfoActivity extends AppCompatActivity {
             WifiInfo wifiInfo = wifiManager.getConnectionInfo();
             //int level = WifiManager.calculateSignalLevel(wifiInfo.getRssi(), numberOfLevels);
             int signal = wifiInfo.getRssi();
-            String wifi = String.valueOf(signal);
 
-            deviceid.setText(subscriberID);
+            String wifi = String.valueOf(signal);
+            
             simserial.setText(SIMSerialNumber);
             networkcountry.setText(networkCountryISO);
             simcountry.setText(SIMCountryISO);
             imei.setText(IMEINumber);
             wifisignal.setText(wifi);
             carrier.setText(carrierName);
+
         }
     }
 
