@@ -30,8 +30,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void requestPermissions() {
         addPermission(permissionsList, Manifest.permission.ACCESS_COARSE_LOCATION);
+        addPermission(permissionsList, Manifest.permission.ACCESS_FINE_LOCATION);
         addPermission(permissionsList, Manifest.permission.READ_PHONE_STATE);
         addPermission(permissionsList, Manifest.permission.ACCESS_WIFI_STATE);
+        addPermission(permissionsList, Manifest.permission.INTERNET);
 
         if(permissionsList.size() > 0) {
             requestPermissions(permissionsList.toArray(new String[permissionsList.size()]),
@@ -79,15 +81,19 @@ public class MainActivity extends AppCompatActivity {
                 Map<String, Integer> perms = new HashMap<>();
                 // Initial
                 perms.put(Manifest.permission.ACCESS_COARSE_LOCATION, PackageManager.PERMISSION_GRANTED);
+                perms.put(Manifest.permission.ACCESS_FINE_LOCATION, PackageManager.PERMISSION_GRANTED);
                 perms.put(Manifest.permission.READ_PHONE_STATE, PackageManager.PERMISSION_GRANTED);
                 perms.put(Manifest.permission.ACCESS_WIFI_STATE, PackageManager.PERMISSION_GRANTED);
+                perms.put(Manifest.permission.INTERNET, PackageManager.PERMISSION_GRANTED);
                 // Fill with results
                 for (int i = 0; i < permissions.length; i++)
                     perms.put(permissions[i], grantResults[i]);
                 // Check for ACCESS_FINE_LOCATION
                 if (perms.get(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                        && perms.get(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                         && perms.get(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED
-                        && perms.get(Manifest.permission.ACCESS_WIFI_STATE) == PackageManager.PERMISSION_GRANTED) {
+                        && perms.get(Manifest.permission.ACCESS_WIFI_STATE) == PackageManager.PERMISSION_GRANTED
+                        && perms.get(Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED) {
                     // All Permissions Granted
                     Toast.makeText(MainActivity.this, "Permessi consentiti.", Toast.LENGTH_SHORT)
                             .show();
