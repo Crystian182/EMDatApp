@@ -613,13 +613,14 @@
             app:layout_constraintTop_toBottomOf="@+id/divider28" />
 
         %Intensità Wifi
+
         <TextView
-            android:id="@+id/intensitaWifiView"
+            android:id="@+id/wifiLevel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="15dp"
-            android:text="Intensità:"
+            android:layout_marginStart="328dp"
+            android:layout_marginTop="20dp"
+            android:text="TextView"
             android:textAppearance="@style/TextAppearance.AppCompat.Display1"
             android:textSize="18sp"
             app:layout_constraintStart_toStartOf="parent"
@@ -629,26 +630,16 @@
             android:id="@+id/wifi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
+            android:layout_marginTop="20dp"
             android:layout_marginEnd="8dp"
             android:text="TextView"
             android:textAlignment="textStart"
             android:textAppearance="@style/TextAppearance.AppCompat.Display1"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.987"
+            app:layout_constraintHorizontal_bias="0.036"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/reteWifiView" />
-
-        <View
-            android:id="@+id/divider19"
-            android:layout_width="395dp"
-            android:layout_height="3dp"
-            android:layout_marginTop="3dp"
-            android:layout_marginEnd="4dp"
-            android:background="?android:attr/listDivider"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/intensitaWifiView" />
 
     </android.support.constraint.ConstraintLayout>
 </ScrollView>

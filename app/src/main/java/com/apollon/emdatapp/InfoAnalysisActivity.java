@@ -56,6 +56,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     private TextView simCountry;
     private TextView operatore;
     private TextView wifi;
+    private TextView wifiLevel;
     private TextView valueEM;
     private TextView lat;
     private TextView lng;
@@ -93,6 +94,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         valueEM = findViewById(R.id.valueEM);
         lat = findViewById(R.id.lat);
         lng = findViewById(R.id.lng);
+        wifiLevel = findViewById(R.id.wifiLevel);
 
         resetFields();
 
@@ -142,6 +144,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         valueEM.setText(loading);
         lat.setText(loading);
         lng.setText(loading);
+        wifiLevel.setText(loading);
     }
 
     private void showAlert() {
@@ -384,15 +387,17 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     public void updateWifi() {
         List<ScanResult> mScanResults = wifiManager.getScanResults();
         String accesspoints = "";
+        String levels = "";
         for(ScanResult results : mScanResults) {
             Log.i(LOG_TAG, results.SSID);
             if(results.SSID.equals("")) {
-                accesspoints = accesspoints + "Rete nascosta " + results.level + "dBm\n";
+                accesspoints = accesspoints + "Rete nascosta \n";
             } else {
-                accesspoints = accesspoints + results.SSID + " " + results.level + "dBm\n";
+                accesspoints = accesspoints + results.SSID +"\n";
             }
-
+            levels = levels + results.level + "dBm\n";
         }
         wifi.setText(accesspoints);
+        wifiLevel.setText(levels);
     }
 }
