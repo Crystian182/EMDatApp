@@ -10,6 +10,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
@@ -18,6 +20,13 @@ import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.CellInfo;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellInfoWcdma;
+import android.telephony.CellSignalStrengthGsm;
+import android.telephony.CellSignalStrengthLte;
+import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
@@ -72,6 +81,8 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     private String generazioneReteDatiValue;
     private String tipoReteDatiValue;
     private String potenzaSegnaleValue;
+    private String latValue;
+    private String lngValue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,12 +111,22 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
 
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            alertOn = false;
+        }
+    }
+
     public void updateInfo() {
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         wifiManager = (WifiManager) getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
 
         updateMagneticField();
+        updatePosition();
 
         handler = new Handler();
         handler.postDelayed(new Runnable() {
@@ -115,7 +136,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
                     updateAll();
                 } else {
                     resetFields();
-                    if(!alertOn) {
+                    if (!alertOn) {
                         showAlert();
                         alertOn = true;
                     }
@@ -160,7 +181,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         builder.setNegativeButton("Chiudi", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                if (!locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
+                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     showAlert();
                 } else {
                     dialog.dismiss();
@@ -179,6 +200,43 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         updateSIMInfo();
         updateTelephonyManager();
         updateWifi();
+    }
+
+    public void updatePosition() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(InfoAnalysisActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+        } else {
+            final LocationListener locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    latValue = String.valueOf(String.valueOf(location.getLatitude()));
+                    lngValue = String.valueOf(String.valueOf(location.getLongitude()));
+                    lat.setText(latValue);
+                    lng.setText(lngValue);
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) {
+
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) {
+
+                }
+            };
+
+
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 100,
+                    0, locationListener);
+        }
     }
 
     public void updatePhoneInfo() {
@@ -254,34 +312,59 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
                     MY_PERMISSIONS_REQUEST_READ_PHONE_STATE);
         } else {
 
-            String[] dataNet = getNetworkTypeName(telephonyManager.getNetworkType());
-            if (dataNet != null) {
-                switch (dataNet[1]) {
-                    case "3G":
-                    case "2G":
-                        potenzaSegnaleValue = String.valueOf(-113 + 2 * telephonyManager.getSignalStrength().getGsmSignalStrength()) + " dBm";
-                        potenzaSegnale.setText(potenzaSegnaleValue);
-                        break;
-                    case "4G":
-                        try {
-                            Method[] methods = android.telephony.SignalStrength.class
-                                    .getMethods();
-                            for (Method mthd : methods) {
-                                if (mthd.getName().equals("getLteRsrp")) {
-                                    potenzaSegnaleValue = mthd.invoke(telephonyManager.getSignalStrength()).toString() + " dBm";
-                                    potenzaSegnale.setText(potenzaSegnaleValue);
+            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                String[] dataNet = getNetworkTypeName(telephonyManager.getNetworkType());
+                if (dataNet != null) {
+                    switch (dataNet[1]) {
+                        case "3G":
+                        case "2G":
+                            potenzaSegnaleValue = String.valueOf(-113 + 2 * telephonyManager.getSignalStrength().getGsmSignalStrength()) + " dBm";
+                            potenzaSegnale.setText(potenzaSegnaleValue);
+                            break;
+                        case "4G":
+                            try {
+                                Method[] methods = android.telephony.SignalStrength.class
+                                        .getMethods();
+                                for (Method mthd : methods) {
+                                    if (mthd.getName().equals("getLteRsrp")) {
+                                        potenzaSegnaleValue = mthd.invoke(telephonyManager.getSignalStrength()).toString() + " dBm";
+                                        potenzaSegnale.setText(potenzaSegnaleValue);
+                                    }
                                 }
+                            } catch (SecurityException e) {
+                                e.printStackTrace();
+                            } catch (IllegalArgumentException e) {
+                                e.printStackTrace();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            } catch (InvocationTargetException e) {
+                                e.printStackTrace();
                             }
-                        } catch (SecurityException e) {
-                            e.printStackTrace();
-                        } catch (IllegalArgumentException e) {
-                            e.printStackTrace();
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        } catch (InvocationTargetException e) {
-                            e.printStackTrace();
+                            break;
+                    }
+                }
+            } else {
+                List<CellInfo> cellInfos = telephonyManager.getAllCellInfo();   //This will give info of all sims present inside your mobile
+                if(cellInfos!=null){
+                    for (int i = 0 ; i<cellInfos.size(); i++){
+                        if(cellInfos.get(i) instanceof CellInfoWcdma){
+                            CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) telephonyManager.getAllCellInfo().get(0);
+                            CellSignalStrengthWcdma cellSignalStrengthWcdma = cellInfoWcdma.getCellSignalStrength();
+                            potenzaSegnaleValue = String.valueOf(cellSignalStrengthWcdma.getDbm()-116);
+                            potenzaSegnale.setText(potenzaSegnaleValue);
+                        }else if(cellInfos.get(i) instanceof CellInfoGsm){
+                            CellInfoGsm cellInfogsm = (CellInfoGsm) telephonyManager.getAllCellInfo().get(0);
+                            CellSignalStrengthGsm cellSignalStrengthGsm = cellInfogsm.getCellSignalStrength();
+                            potenzaSegnaleValue = String.valueOf(cellSignalStrengthGsm.getAsuLevel()-116);
+                            potenzaSegnale.setText(potenzaSegnaleValue);
+                        }else if(cellInfos.get(i) instanceof CellInfoLte){
+                            CellInfoLte cellInfoLte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
+                            CellSignalStrengthLte cellSignalStrengthLte = cellInfoLte.getCellSignalStrength();
+                            potenzaSegnaleValue = String.valueOf(cellSignalStrengthLte.getDbm());
+                            potenzaSegnale.setText(potenzaSegnaleValue);
                         }
                         break;
+                    }
                 }
             }
         }
@@ -385,7 +468,6 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         List<ScanResult> mScanResults = wifiManager.getScanResults();
         String accesspoints = "";
         for(ScanResult results : mScanResults) {
-            Log.i(LOG_TAG, results.SSID);
             if(results.SSID.equals("")) {
                 accesspoints = accesspoints + "Rete nascosta " + results.level + "dBm\n";
             } else {
