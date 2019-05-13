@@ -310,18 +310,20 @@ public class InfoActivity extends AppCompatActivity implements SensorEventListen
             }
 
             String[] dataNet = getNetworkTypeName(telephonyManager.getNetworkType());
+
             if(dataNet != null) {
                 tipoReteDatiCellulare.setText(dataNet[0]);
                 generazioneReteDatiCellulare.setText(dataNet[1]);
             }
 
             //aggiorno il livello di segnale
-            onSignalStrengthsChanged(telephonyManager.getSignalStrength());
+            //onSignalStrengthsChanged(telephonyManager.getSignalStrength());
         }
 
 
         public String[] getNetworkTypeName(int networkType) {
             String[] network = new String[2];
+            Log.i("prelev ", " " + networkType);
             switch (networkType) {
                 case TelephonyManager.NETWORK_TYPE_GPRS:
                     network[0] = "GPRS";
