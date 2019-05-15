@@ -2,9 +2,11 @@ package com.apollon.emdatapp;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -135,8 +137,8 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     public void updateInfo() {
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        wifiManager = (WifiManager) getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
 
+        initializeWifiManager();
         updateMagneticField();
         updatePosition();
 
@@ -212,7 +214,6 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         updatePhoneInfo();
         updateSIMInfo();
         updateTelephonyManager();
-        updateWifi();
     }
 
     public void updatePosition() {
@@ -479,19 +480,45 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     /****************************************************************************************/
 
     public void updateWifi() {
-        List<ScanResult> mScanResults = wifiManager.getScanResults();
-        String accesspoints = "";
-        String levels = "";
-        for(ScanResult results : mScanResults) {
-            if(results.SSID.equals("")) {
-                accesspoints = accesspoints + "Rete nascosta \n";
-            } else {
-                accesspoints = accesspoints + results.SSID +"\n";
+        if(!wifiManager.isWifiEnabled()) {
+            wifi.setText("Non connesso");
+            wifiLevel.setText("-");
+        } else {
+            List<ScanResult> mScanResults = wifiManager.getScanResults();
+            String accesspoints = "";
+            String levels = "";
+            for (ScanResult results : mScanResults) {
+                if (results.SSID.equals("")) {
+                    accesspoints = accesspoints + "Rete nascosta \n";
+                } else {
+                    accesspoints = accesspoints + results.SSID + "\n";
+                }
+                levels = levels + results.level + "dBm\n";
             }
-            levels = levels + results.level + "dBm\n";
+            wifi.setText(accesspoints);
+            wifiLevel.setText(levels);
         }
-        wifi.setText(accesspoints);
-        wifiLevel.setText(levels);
+    }
+
+    public void initializeWifiManager() {
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
+
+        wifiManager.startScan(); // without starting scan, we may never receive any scan results
+
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction(WifiManager.RSSI_CHANGED_ACTION); // you can keep this filter if you want to get fresh results when singnal stregth of the APs was changed
+        filter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+
+        wifiManager.startScan();
+
+        final BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override public void onReceive(Context context, Intent intent) {
+                wifiManager.startScan(); // start scan again to get fresh results ASAP
+                updateWifi();
+            }
+        };
+
+        getApplicationContext().registerReceiver(receiver, filter);
     }
 
     public void sendData() {
