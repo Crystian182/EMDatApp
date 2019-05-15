@@ -42,6 +42,13 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.apollon.emdatapp.Model.GPSMeasure;
+import com.apollon.emdatapp.Model.Measure;
+import com.apollon.emdatapp.Model.Network;
+import com.apollon.emdatapp.Model.NetworkMeasure;
+import com.apollon.emdatapp.Model.PhoneInfo;
+import com.apollon.emdatapp.Model.SIMInfo;
+import com.apollon.emdatapp.Model.UnitMeasurement;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -56,7 +63,6 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     private String loading = "Rilevamento...";
     private String LOG_TAG = "prelev";
     private boolean alertOn = false;
-    private Date gpsTime;
     private TelephonyManager telephonyManager;
     private SensorManager sensorManager;
     private WifiManager wifiManager;
@@ -82,20 +88,11 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     private TextView lat;
     private TextView lng;
 
-    private String imeiValue;
-    private String serialeSIMValue;
-    private String networkCountryValue;
-    private String simCountryValue;
-    private String carrierNameValue;
-    private String teslaValue;
-    private String connessioneDatiValue;
-    private String generazioneReteVoceValue;
-    private String tipoReteVoceValue;
-    private String generazioneReteDatiValue;
-    private String tipoReteDatiValue;
-    private String potenzaSegnaleValue;
-    private String latValue;
-    private String lngValue;
+    private PhoneInfo phoneInfo = null;
+    private SIMInfo simInfo = null;
+    private Measure emMeasure = null;
+    private NetworkMeasure networkMeasure = null;
+    private GPSMeasure gpsMeasure = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,6 +119,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         resetFields();
 
         updateInfo();
+        sendInfo();
 
         sendData();
     }
@@ -162,6 +160,19 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
 
     }
 
+    public void sendInfo() {
+        handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if(gpsMeasure != null && (new Date().getTime()-gpsMeasure.getDate().getTime() <= 60000)) {
+                    sendData();
+                }
+                handler.postDelayed(this, 10000);
+            }
+        }, 10000);  //the time is in miliseconds
+    }
+
     public void resetFields() {
         imei.setText(loading);
         tipoReteVoceCellulare.setText(loading);
@@ -179,6 +190,8 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         lat.setText(loading);
         lng.setText(loading);
         wifiLevel.setText(loading);
+
+        gpsMeasure = null;
     }
 
     private void showAlert() {
@@ -226,11 +239,24 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
             final LocationListener locationListener = new LocationListener() {
                 @Override
                 public void onLocationChanged(Location location) {
-                    latValue = String.valueOf(String.valueOf(location.getLatitude()));
-                    lngValue = String.valueOf(String.valueOf(location.getLongitude()));
-                    lat.setText(latValue);
-                    lng.setText(lngValue);
-                    gpsTime = new Date();
+                    UnitMeasurement unitMeasurement = new UnitMeasurement();
+                    unitMeasurement.setName("degree");
+
+                    Measure latMeasure = new Measure();
+                    latMeasure.setUnitMeasurement(unitMeasurement);
+                    latMeasure.setValue(location.getLatitude());
+
+                    Measure lngMeasure = new Measure();
+                    lngMeasure.setUnitMeasurement(unitMeasurement);
+                    lngMeasure.setValue(location.getLongitude());
+
+                    gpsMeasure = new GPSMeasure();
+                    gpsMeasure.setLat(latMeasure);
+                    gpsMeasure.setLng(lngMeasure);
+                    gpsMeasure.setDate(new Date());
+
+                    lat.setText(String.valueOf(gpsMeasure.getLat().getValue()));
+                    lng.setText(String.valueOf(gpsMeasure.getLng().getValue()));
                 }
 
                 @Override
@@ -261,8 +287,9 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
                     new String[]{Manifest.permission.READ_PHONE_STATE},
                     MY_PERMISSIONS_REQUEST_READ_PHONE_STATE);
         } else {
-            imeiValue = telephonyManager.getDeviceId();
-            imei.setText(imeiValue);
+            phoneInfo = new PhoneInfo();
+            phoneInfo.setImei(telephonyManager.getDeviceId());
+            imei.setText(phoneInfo.getImei());
         }
     }
 
@@ -272,15 +299,16 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
                     new String[]{Manifest.permission.READ_PHONE_STATE},
                     MY_PERMISSIONS_REQUEST_READ_PHONE_STATE);
         } else {
-            serialeSIMValue = telephonyManager.getSimSerialNumber();
-            networkCountryValue = telephonyManager.getNetworkCountryIso();
-            simCountryValue = telephonyManager.getSimCountryIso();
-            carrierNameValue = telephonyManager.getNetworkOperatorName();
+            simInfo = new SIMInfo();
+            simInfo.setSeriale(telephonyManager.getSimSerialNumber());
+            simInfo.setNetworkCountry(telephonyManager.getNetworkCountryIso());
+            simInfo.setSIMCountry(telephonyManager.getSimCountryIso());
+            simInfo.setCarrier(telephonyManager.getNetworkOperatorName());
 
-            serialeSim.setText(serialeSIMValue);
-            networkCountry.setText(networkCountryValue);
-            simCountry.setText(simCountryValue);
-            operatore.setText(carrierNameValue);
+            serialeSim.setText(simInfo.getSeriale());
+            networkCountry.setText(simInfo.getNetworkCountry());
+            simCountry.setText(simInfo.getSIMCountry());
+            operatore.setText(simInfo.getCarrier());
         }
     }
 
@@ -302,8 +330,15 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         float roll = Math.round(event.values[2]);
 
         double computedTesla = Math.sqrt((azimuth * azimuth) + (pitch * pitch) + (roll * roll));
-        teslaValue = String.format("%.2f", computedTesla) + " μT";
-        valueEM.setText(teslaValue);
+        if(!alertOn) {
+            emMeasure = new Measure();
+            emMeasure.setValue(computedTesla);
+            UnitMeasurement unitMeasurement = new UnitMeasurement();
+            unitMeasurement.setName("μT");
+            emMeasure.setUnitMeasurement(unitMeasurement);
+
+            valueEM.setText(String.format("%.2f", emMeasure.getValue()) + " " + emMeasure.getUnitMeasurement().getName());
+        }
     }
 
 
@@ -315,6 +350,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
 
     /********************************** TELEPHONY MANAGER ***********************************/
     public void updateTelephonyManager() {
+        networkMeasure = new NetworkMeasure();
         updateDataConnection();
         updateDataNetworkType();
         updateVoiceNetworkType();
@@ -327,15 +363,19 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
                     new String[]{Manifest.permission.READ_PHONE_STATE},
                     MY_PERMISSIONS_REQUEST_READ_PHONE_STATE);
         } else {
-
+            UnitMeasurement unitMeasurement = new UnitMeasurement();
+            unitMeasurement.setName("dBm");
             if (android.os.Build.VERSION.SDK_INT >= 28) {
                 String[] dataNet = getNetworkTypeName(telephonyManager.getNetworkType());
                 if (dataNet != null) {
                     switch (dataNet[1]) {
                         case "3G":
                         case "2G":
-                            potenzaSegnaleValue = String.valueOf(-113 + 2 * telephonyManager.getSignalStrength().getGsmSignalStrength()) + " dBm";
-                            potenzaSegnale.setText(potenzaSegnaleValue);
+                            Measure signalMeasure = new Measure();
+                            signalMeasure.setUnitMeasurement(unitMeasurement);
+                            signalMeasure.setValue(Double.valueOf(-113 + 2 * telephonyManager.getSignalStrength().getGsmSignalStrength()));
+                            networkMeasure.setMeasure(signalMeasure);
+                            potenzaSegnale.setText(String.valueOf(networkMeasure.getMeasure().getValue().intValue()) + " " + networkMeasure.getMeasure().getUnitMeasurement().getName());
                             break;
                         case "4G":
                             try {
@@ -343,8 +383,11 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
                                         .getMethods();
                                 for (Method mthd : methods) {
                                     if (mthd.getName().equals("getLteRsrp")) {
-                                        potenzaSegnaleValue = mthd.invoke(telephonyManager.getSignalStrength()).toString() + " dBm";
-                                        potenzaSegnale.setText(potenzaSegnaleValue);
+                                        signalMeasure = new Measure();
+                                        signalMeasure.setUnitMeasurement(unitMeasurement);
+                                        signalMeasure.setValue(Double.valueOf(mthd.invoke(telephonyManager.getSignalStrength()).toString()));
+                                        networkMeasure.setMeasure(signalMeasure);
+                                        potenzaSegnale.setText(String.valueOf(networkMeasure.getMeasure().getValue().intValue()) + " " + networkMeasure.getMeasure().getUnitMeasurement().getName());
                                     }
                                 }
                             } catch (SecurityException e) {
@@ -366,18 +409,32 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
                         if(cellInfos.get(i) instanceof CellInfoWcdma){
                             CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) telephonyManager.getAllCellInfo().get(0);
                             CellSignalStrengthWcdma cellSignalStrengthWcdma = cellInfoWcdma.getCellSignalStrength();
-                            potenzaSegnaleValue = String.valueOf(cellSignalStrengthWcdma.getDbm()-116);
-                            potenzaSegnale.setText(potenzaSegnaleValue);
+
+                            Measure signalMeasure = new Measure();
+                            signalMeasure.setUnitMeasurement(unitMeasurement);
+                            signalMeasure.setValue(Double.valueOf(cellSignalStrengthWcdma.getDbm()-116));
+                            networkMeasure.setMeasure(signalMeasure);
+
+                            potenzaSegnale.setText(String.valueOf(networkMeasure.getMeasure().getValue().intValue()) + " " + networkMeasure.getMeasure().getUnitMeasurement().getName());
                         }else if(cellInfos.get(i) instanceof CellInfoGsm){
                             CellInfoGsm cellInfogsm = (CellInfoGsm) telephonyManager.getAllCellInfo().get(0);
                             CellSignalStrengthGsm cellSignalStrengthGsm = cellInfogsm.getCellSignalStrength();
-                            potenzaSegnaleValue = String.valueOf(cellSignalStrengthGsm.getAsuLevel()-116);
-                            potenzaSegnale.setText(potenzaSegnaleValue);
+
+                            Measure signalMeasure = new Measure();
+                            signalMeasure.setUnitMeasurement(unitMeasurement);
+                            signalMeasure.setValue(Double.valueOf(cellSignalStrengthGsm.getDbm()-116));
+                            networkMeasure.setMeasure(signalMeasure);
+
+                            potenzaSegnale.setText(String.valueOf(networkMeasure.getMeasure().getValue().intValue()) + " " + networkMeasure.getMeasure().getUnitMeasurement().getName());
                         }else if(cellInfos.get(i) instanceof CellInfoLte){
                             CellInfoLte cellInfoLte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
                             CellSignalStrengthLte cellSignalStrengthLte = cellInfoLte.getCellSignalStrength();
-                            potenzaSegnaleValue = String.valueOf(cellSignalStrengthLte.getDbm());
-                            potenzaSegnale.setText(potenzaSegnaleValue);
+                            Measure signalMeasure = new Measure();
+                            signalMeasure.setUnitMeasurement(unitMeasurement);
+                            signalMeasure.setValue(Double.valueOf(cellSignalStrengthLte.getDbm()));
+                            networkMeasure.setMeasure(signalMeasure);
+
+                            potenzaSegnale.setText(String.valueOf(networkMeasure.getMeasure().getValue().intValue()) + " " + networkMeasure.getMeasure().getUnitMeasurement().getName());
                         }
                         break;
                     }
@@ -387,8 +444,13 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     }
 
     public void updateDataConnection() {
-        connessioneDatiValue = getStateDataConnection(telephonyManager.getDataState());
-        connessioneDati.setText(connessioneDatiValue);
+        String connessioneDatiResult = getStateDataConnection(telephonyManager.getDataState());
+        if(connessioneDatiResult.equals("Connesso")) {
+            networkMeasure.setDataConnected(true);
+        } else {
+            networkMeasure.setDataConnected(false);
+        }
+        connessioneDati.setText(connessioneDatiResult);
     }
 
     public void updateDataNetworkType() {
@@ -399,10 +461,13 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         } else {
             String[] voiceNetType = getNetworkTypeName(telephonyManager.getDataNetworkType());
             if (voiceNetType != null) {
-                generazioneReteDatiValue = voiceNetType[1];
-                tipoReteDatiValue = voiceNetType[0];
-                generazioneReteDatiCellulare.setText(generazioneReteDatiValue);
-                tipoReteDatiCellulare.setText(tipoReteDatiValue);
+                Network dataNetwork = new Network();
+                dataNetwork.setGeneration(voiceNetType[1]);
+                dataNetwork.setName(voiceNetType[0]);
+
+                networkMeasure.setDataNetwork(dataNetwork);
+                generazioneReteDatiCellulare.setText(networkMeasure.getDataNetwork().getGeneration());
+                tipoReteDatiCellulare.setText(networkMeasure.getDataNetwork().getName());
             }
         }
     }
@@ -415,10 +480,13 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         } else {
             String[] voiceNetType = getNetworkTypeName(telephonyManager.getVoiceNetworkType());
             if(voiceNetType != null) {
-                generazioneReteVoceValue = voiceNetType[1];
-                tipoReteVoceValue = voiceNetType[0];
-                generazioneReteVoceCellulare.setText(generazioneReteVoceValue);
-                tipoReteVoceCellulare.setText(tipoReteVoceValue);
+                Network voiceNetwork = new Network();
+                voiceNetwork.setGeneration(voiceNetType[1]);
+                voiceNetwork.setName(voiceNetType[0]);
+
+                networkMeasure.setVoiceNetwork(voiceNetwork);
+                generazioneReteVoceCellulare.setText(networkMeasure.getVoiceNetwork().getGeneration());
+                tipoReteVoceCellulare.setText(networkMeasure.getVoiceNetwork().getName());
             }
         }
     }
@@ -525,8 +593,9 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     }
 
     public void sendData() {
+        Log.i("scan: ", "INVIO");
         // Instantiate the RequestQueue.
-        RequestQueue queue = Volley.newRequestQueue(this);
+        /*RequestQueue queue = Volley.newRequestQueue(this);
         String url ="http://jsonplaceholder.typicode.com/posts";
 
 // Request a string response from the provided URL.
@@ -545,6 +614,6 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         });
 
 // Add the request to the RequestQueue.
-        queue.add(stringRequest);
+        queue.add(stringRequest);*/
     }
 }
