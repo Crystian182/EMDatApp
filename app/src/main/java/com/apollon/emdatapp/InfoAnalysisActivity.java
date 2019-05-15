@@ -17,6 +17,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
@@ -36,10 +37,14 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.apollon.emdatapp.Model.GPSMeasure;
@@ -47,11 +52,21 @@ import com.apollon.emdatapp.Model.Measure;
 import com.apollon.emdatapp.Model.Network;
 import com.apollon.emdatapp.Model.NetworkMeasure;
 import com.apollon.emdatapp.Model.PhoneInfo;
+import com.apollon.emdatapp.Model.Report;
 import com.apollon.emdatapp.Model.SIMInfo;
 import com.apollon.emdatapp.Model.UnitMeasurement;
+import com.apollon.emdatapp.Model.WiFiMeasure;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -62,6 +77,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
 
     private String loading = "Rilevamento...";
     private String LOG_TAG = "prelev";
+    private String address = "51.68.124.145:8000";
     private boolean alertOn = false;
     private TelephonyManager telephonyManager;
     private SensorManager sensorManager;
@@ -72,6 +88,8 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     AlertDialog dialog;
 
     private TextView imei;
+    private TextView produttore;
+    private TextView modello;
     private TextView tipoReteVoceCellulare;
     private TextView generazioneReteVoceCellulare;
     private TextView tipoReteDatiCellulare;
@@ -93,6 +111,9 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     private Measure emMeasure = null;
     private NetworkMeasure networkMeasure = null;
     private GPSMeasure gpsMeasure = null;
+    private ArrayList<WiFiMeasure> wiFiMeasures = null;
+
+    private Report report = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +121,8 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         setContentView(R.layout.activity_info_analysis);
 
         imei = findViewById(R.id.imei);
+        produttore = findViewById(R.id.produttore);
+        modello = findViewById(R.id.modello);
         tipoReteVoceCellulare = findViewById(R.id.tipoReteVoceCellulare);
         generazioneReteVoceCellulare = findViewById(R.id.generazioneReteVoceCellulare);
         tipoReteDatiCellulare = findViewById(R.id.tipoReteDatiCellulare);
@@ -121,7 +144,6 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         updateInfo();
         sendInfo();
 
-        sendData();
     }
 
     @Override
@@ -168,13 +190,15 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
                 if(gpsMeasure != null && (new Date().getTime()-gpsMeasure.getDate().getTime() <= 60000)) {
                     sendData();
                 }
-                handler.postDelayed(this, 10000);
+                handler.postDelayed(this, 60000);
             }
-        }, 10000);  //the time is in miliseconds
+        }, 60000);  //the time is in miliseconds
     }
 
     public void resetFields() {
         imei.setText(loading);
+        produttore.setText(loading);
+        modello.setText(loading);
         tipoReteVoceCellulare.setText(loading);
         generazioneReteVoceCellulare.setText(loading);
         tipoReteDatiCellulare.setText(loading);
@@ -289,7 +313,12 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         } else {
             phoneInfo = new PhoneInfo();
             phoneInfo.setImei(telephonyManager.getDeviceId());
+            phoneInfo.setManufacturer(Build.MANUFACTURER);
+            phoneInfo.setModel(Build.MODEL);
+
             imei.setText(phoneInfo.getImei());
+            produttore.setText(phoneInfo.getManufacturer());
+            modello.setText(phoneInfo.getModel());
         }
     }
 
@@ -557,13 +586,45 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         else {
             String accesspoints = "";
             String levels = "";
+
+            wiFiMeasures = new ArrayList<WiFiMeasure>();
+
+            UnitMeasurement unitMeasurement = new UnitMeasurement();
+            unitMeasurement.setName("dBm");
+
+            UnitMeasurement unitMeasurementFrequency = new UnitMeasurement();
+            unitMeasurementFrequency.setName("MHz");
+
             for(ScanResult results : mScanResults) {
+                WiFiMeasure wiFiMeasure = new WiFiMeasure();
                 if(results.SSID.equals("")) {
-                    accesspoints = accesspoints + "Rete nascosta \n";
+                    wiFiMeasure.setSSID("Rete nascosta");
                 } else {
-                    accesspoints = accesspoints + results.SSID +"\n";
+                    wiFiMeasure.setSSID(results.SSID);
+
                 }
-                levels = levels + results.level + "dBm\n";
+
+                Measure dBmMeasure = new Measure();
+                dBmMeasure.setValue(Double.valueOf(results.level));
+                dBmMeasure.setUnitMeasurement(unitMeasurement);
+                wiFiMeasure.setdBmMeasure(dBmMeasure);
+
+                Measure frequencyMeasure = new Measure();
+                frequencyMeasure.setValue(Double.valueOf(results.frequency));
+                frequencyMeasure.setUnitMeasurement(unitMeasurementFrequency);
+                wiFiMeasure.setFrequencyMeasure(frequencyMeasure);
+
+                wiFiMeasure.setChannel(getWiFiChannel(wiFiMeasure.getFrequencyMeasure().getValue().intValue()));
+
+                wiFiMeasures.add(wiFiMeasure);
+
+                accesspoints = accesspoints + wiFiMeasure.getSSID() + "\n" +
+                        "CH:" + wiFiMeasure.getChannel() +
+                        " - " + wiFiMeasure.getFrequencyMeasure().getValue() + " " +
+                        wiFiMeasure.getFrequencyMeasure().getUnitMeasurement().getName() + "\n";
+
+                levels = levels + wiFiMeasure.getdBmMeasure().getValue() + " " +
+                            wiFiMeasure.getdBmMeasure().getUnitMeasurement().getName() + "\n";
             }
             wifi.setText(accesspoints);
             wifiLevel.setText(levels);
@@ -592,28 +653,109 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
 
     }
 
+    public int getWiFiChannel(Integer frequency) {
+        switch(frequency) {
+            case 2412:
+                return 1;
+            case 2417:
+                return 2;
+            case 2422:
+                return 3;
+            case 2427:
+                return 4;
+            case 2432:
+                return 5;
+            case 2437:
+                return 6;
+            case 2442:
+                return 7;
+            case 2447:
+                return 8;
+            case 2452:
+                return 9;
+            case 2457:
+                return 10;
+            case 2462:
+                return 11;
+            case 2467:
+                return 12;
+            case 2472:
+                return 13;
+            case 2484:
+                return 14;
+            default:
+                return 0;
+        }
+    }
+
     public void sendData() {
-        Log.i("scan: ", "INVIO");
-        // Instantiate the RequestQueue.
-        /*RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://jsonplaceholder.typicode.com/posts";
+        report = new Report();
+        if(phoneInfo != null) {
+            report.setPhoneInfo(phoneInfo);
+        } if(simInfo != null) {
+            report.setSimInfo(simInfo);
+        } if(networkMeasure != null) {
+            report.setNetworkMeasure(networkMeasure);
+        } if(gpsMeasure != null) {
+            report.setGpsMeasure(gpsMeasure);
+        } if(emMeasure != null) {
+            report.setEmMeasure(emMeasure);
+        } if(wiFiMeasures != null) {
+            report.setWifiMeasure(wiFiMeasures);
+        }
+        report.setDate(new Date());
 
-// Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        Log.i("response: ", response.substring(0, 100));
+        try {
+            Gson gson = new Gson();
+            RequestQueue requestQueue = Volley.newRequestQueue(this);
+            String URL = "http://" + address + "/misurazioni";
+            final String requestBody = gson.toJson(report);
+
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+                    Log.i("VOLLEY", response);
+                    Toast.makeText(InfoAnalysisActivity.this, "Report inviato!",
+                            Toast.LENGTH_LONG).show();
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.e("VOLLEY", error.toString());
+                    Toast.makeText(InfoAnalysisActivity.this, "Errore durante l'invio",
+                            Toast.LENGTH_LONG).show();
+                }
+            }) {
+                @Override
+                public String getBodyContentType() {
+                    return "application/json; charset=utf-8";
+                }
+
+                @Override
+                public byte[] getBody() throws AuthFailureError {
+                    try {
+                        return requestBody == null ? null : requestBody.getBytes("utf-8");
+                    } catch (UnsupportedEncodingException uee) {
+                        VolleyLog.wtf("Unsupported Encoding while trying to get the bytes of %s using %s", requestBody, "utf-8");
+                        return null;
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.i("response: ", error.toString());
-            }
-        });
+                }
 
-// Add the request to the RequestQueue.
-        queue.add(stringRequest);*/
+                @Override
+                protected Response<String> parseNetworkResponse(NetworkResponse response) {
+                    String responseString = "";
+                    if (response != null) {
+                        responseString = String.valueOf(response.statusCode);
+                        // can get more details such as response.headers
+                    }
+                    return Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
+                }
+            };
+
+            requestQueue.add(stringRequest);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 }
