@@ -521,7 +521,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         };
 
         getApplicationContext().registerReceiver(receiver, filter);
-        
+
     }
 
     public void sendData() {
