@@ -33,8 +33,16 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Date;
 import java.util.List;
 
 public class InfoAnalysisActivity extends AppCompatActivity implements SensorEventListener {
@@ -45,6 +53,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
     private String loading = "Rilevamento...";
     private String LOG_TAG = "prelev";
     private boolean alertOn = false;
+    private Date gpsTime;
     private TelephonyManager telephonyManager;
     private SensorManager sensorManager;
     private WifiManager wifiManager;
@@ -111,13 +120,14 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
 
         updateInfo();
 
+        sendData();
     }
 
     @Override
     public void onResume() {
         super.onResume();
 
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+        if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             alertOn = false;
         }
     }
@@ -134,7 +144,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     updateAll();
                 } else {
                     resetFields();
@@ -184,7 +194,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         builder.setNegativeButton("Chiudi", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                if (!locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     showAlert();
                 } else {
                     dialog.dismiss();
@@ -218,6 +228,7 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
                     lngValue = String.valueOf(String.valueOf(location.getLongitude()));
                     lat.setText(latValue);
                     lng.setText(lngValue);
+                    gpsTime = new Date();
                 }
 
                 @Override
@@ -481,5 +492,29 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
         }
         wifi.setText(accesspoints);
         wifiLevel.setText(levels);
+    }
+
+    public void sendData() {
+        // Instantiate the RequestQueue.
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url ="http://jsonplaceholder.typicode.com/posts";
+
+// Request a string response from the provided URL.
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        // Display the first 500 characters of the response string.
+                        Log.i("response: ", response.substring(0, 100));
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.i("response: ", error.toString());
+            }
+        });
+
+// Add the request to the RequestQueue.
+        queue.add(stringRequest);
     }
 }
