@@ -32,6 +32,7 @@ import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -480,18 +481,25 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
 
     public void updateWifi() {
         List<ScanResult> mScanResults = wifiManager.getScanResults();
-        String accesspoints = "";
-        String levels = "";
-        for(ScanResult results : mScanResults) {
-            if(results.SSID.equals("")) {
-                accesspoints = accesspoints + "Rete nascosta \n";
-            } else {
-                accesspoints = accesspoints + results.SSID +"\n";
-            }
-            levels = levels + results.level + "dBm\n";
+        if (!wifiManager.isWifiEnabled()) {
+            wifi.setText("Non connesso");
+            wifiLevel.setText("-");
         }
-        wifi.setText(accesspoints);
-        wifiLevel.setText(levels);
+        else {
+            String accesspoints = "";
+            String levels = "";
+            for(ScanResult results : mScanResults) {
+                if(results.SSID.equals("")) {
+                    accesspoints = accesspoints + "Rete nascosta \n";
+                } else {
+                    accesspoints = accesspoints + results.SSID +"\n";
+                }
+                levels = levels + results.level + "dBm\n";
+            }
+            wifi.setText(accesspoints);
+            wifiLevel.setText(levels);
+
+        }
     }
 
     public void sendData() {
