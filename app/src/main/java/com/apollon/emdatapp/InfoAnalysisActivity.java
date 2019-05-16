@@ -618,10 +618,12 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
 
                 wiFiMeasures.add(wiFiMeasure);
 
-                accesspoints = accesspoints + wiFiMeasure.getSSID() + "\n" +
+                /*accesspoints = accesspoints + wiFiMeasure.getSSID() + "\n" +
                         "CH:" + wiFiMeasure.getChannel() +
                         " - " + wiFiMeasure.getFrequencyMeasure().getValue() + " " +
-                        wiFiMeasure.getFrequencyMeasure().getUnitMeasurement().getName() + "\n";
+                        wiFiMeasure.getFrequencyMeasure().getUnitMeasurement().getName() + "\n";*/
+
+                accesspoints = accesspoints + wiFiMeasure.getSSID() + "\n";
 
                 levels = levels + wiFiMeasure.getdBmMeasure().getValue() + " " +
                             wiFiMeasure.getdBmMeasure().getUnitMeasurement().getName() + "\n";
@@ -715,15 +717,15 @@ public class InfoAnalysisActivity extends AppCompatActivity implements SensorEve
                 @Override
                 public void onResponse(String response) {
                     Log.i("VOLLEY", response);
-                    Toast.makeText(InfoAnalysisActivity.this, "Report inviato!",
-                            Toast.LENGTH_LONG).show();
+                    //Toast.makeText(InfoAnalysisActivity.this, "Report inviato!",
+                            //Toast.LENGTH_LONG).show();
                 }
             }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Log.e("VOLLEY", error.toString());
-                    Toast.makeText(InfoAnalysisActivity.this, "Errore durante l'invio",
-                            Toast.LENGTH_LONG).show();
+                    //Toast.makeText(InfoAnalysisActivity.this, "Errore durante l'invio",
+                            //Toast.LENGTH_LONG).show();
                 }
             }) {
                 @Override
