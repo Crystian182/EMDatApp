@@ -91,8 +91,8 @@ public class InfoAnalysisActivity extends AppCompatActivity {
 
         resetFields();
 
-        Intent intent = new Intent(InfoAnalysisActivity.this, ScheduledJobService.class);
-        startService(intent);
+        //Intent intent = new Intent(InfoAnalysisActivity.this, ScheduledJobService.class);
+        //startService(intent);
 
         LocalBroadcastManager.getInstance(InfoAnalysisActivity.this).registerReceiver(
                 mMessageReceiver, new IntentFilter("infoUpdates"));

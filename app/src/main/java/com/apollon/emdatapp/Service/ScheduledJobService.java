@@ -1,6 +1,8 @@
 package com.apollon.emdatapp.Service;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -23,6 +25,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoGsm;
@@ -44,6 +47,7 @@ import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.apollon.emdatapp.MainActivity;
 import com.apollon.emdatapp.Model.GPSMeasure;
 import com.apollon.emdatapp.Model.Measure;
 import com.apollon.emdatapp.Model.Network;
@@ -53,6 +57,7 @@ import com.apollon.emdatapp.Model.Report;
 import com.apollon.emdatapp.Model.SIMInfo;
 import com.apollon.emdatapp.Model.UnitMeasurement;
 import com.apollon.emdatapp.Model.WiFiMeasure;
+import com.apollon.emdatapp.R;
 import com.google.gson.Gson;
 
 import java.io.UnsupportedEncodingException;
@@ -61,6 +66,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import static com.apollon.emdatapp.App.CHANNEL_ID;
 
 
 public class ScheduledJobService extends Service implements SensorEventListener {
@@ -94,6 +101,7 @@ public class ScheduledJobService extends Service implements SensorEventListener 
 
     @Override
     public void onCreate() {
+        super.onCreate();
         initializeListeners();
 
         HandlerThread handlerThread = new HandlerThread("background-thread");
@@ -125,6 +133,33 @@ public class ScheduledJobService extends Service implements SensorEventListener 
                 handlerDataUpdating.postDelayed(this, DATA_UPDATING_INTERVAL);
             }
         }, DATA_UPDATING_INTERVAL);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String input = intent.getStringExtra("inputExtra");
+
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                0, notificationIntent, 0);
+
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Example Service")
+                .setContentText(input)
+                .setContentIntent(pendingIntent)
+                .build();
+
+        startForeground(1, notification);
+
+        //do heavy work on a background thread
+        //stopSelf();
+
+        return START_NOT_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
     }
 
     private void sendInfoToActivity(PhoneInfo phoneInfo) {
@@ -507,8 +542,8 @@ public class ScheduledJobService extends Service implements SensorEventListener 
 
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 100,
                     0, locationListener);
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100,
-                    0, locationListener);
+            /*locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100,
+                    0, locationListener);*/
         }
     }
 

@@ -5,11 +5,14 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.apollon.emdatapp.Service.ScheduledJobService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,6 +55,10 @@ public class MainActivity extends AppCompatActivity {
 
         Intent intent = new Intent(this, InfoAnalysisActivity.class);
         startActivity(intent);
+
+        Intent serviceIntent = new Intent(this, ScheduledJobService.class);
+
+        ContextCompat.startForegroundService(this, serviceIntent);
 
     }
 
