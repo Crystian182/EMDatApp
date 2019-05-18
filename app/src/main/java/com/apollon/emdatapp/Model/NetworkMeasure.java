@@ -5,7 +5,7 @@ public class NetworkMeasure {
     private Network voiceNetwork;
     private Network dataNetwork;
     private Measure measure;
-    private boolean dataConnected;
+    private String dataState;
 
     public Network getVoiceNetwork() {
         return voiceNetwork;
@@ -31,11 +31,11 @@ public class NetworkMeasure {
         this.measure = measure;
     }
 
-    public boolean isDataConnected() {
-        return dataConnected;
+    public String getDataState() {
+        return dataState;
     }
 
-    public void setDataConnected(boolean dataConnected) {
-        this.dataConnected = dataConnected;
+    public void setDataState(String dataState) {
+        this.dataState = dataState;
     }
 }

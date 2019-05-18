@@ -26,15 +26,13 @@
             android:required="false" />
 
         <activity android:name=".InfoAnalysisActivity"></activity>
-        <activity android:name=".ReportActivity" />
-        <activity android:name=".InfoActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name=".Service.ScheduledJobService" />
     </application>
 
 </manifest>
