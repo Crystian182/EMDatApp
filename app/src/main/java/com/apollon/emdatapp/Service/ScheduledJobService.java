@@ -2,6 +2,7 @@ package com.apollon.emdatapp.Service;
 
 import android.Manifest;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -9,6 +10,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -36,6 +39,10 @@ import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
@@ -47,6 +54,7 @@ import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.apollon.emdatapp.InfoAnalysisActivity;
 import com.apollon.emdatapp.MainActivity;
 import com.apollon.emdatapp.Model.GPSMeasure;
 import com.apollon.emdatapp.Model.Measure;
@@ -57,15 +65,24 @@ import com.apollon.emdatapp.Model.Report;
 import com.apollon.emdatapp.Model.SIMInfo;
 import com.apollon.emdatapp.Model.UnitMeasurement;
 import com.apollon.emdatapp.Model.WiFiMeasure;
+import com.apollon.emdatapp.Notification.NotificationReceiver;
 import com.apollon.emdatapp.R;
 import com.google.gson.Gson;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import static com.apollon.emdatapp.App.CHANNEL_ID;
 
@@ -75,7 +92,6 @@ public class ScheduledJobService extends Service implements SensorEventListener 
     private final String BACKEND_ADDRESS = "51.68.124.145:8000";
     private final long DATA_UPDATING_INTERVAL = 2000; //2 sec
     private final long DATA_SENDING_INTERVAL = 30; //30 sec
-    private final long GPS_VALID_TIME = 60000; //1 min
 
     private TelephonyManager telephonyManager;
     private SensorManager sensorManager;
@@ -89,6 +105,8 @@ public class ScheduledJobService extends Service implements SensorEventListener 
     private NetworkMeasure networkMeasure = null;
     private GPSMeasure gpsMeasure = null;
     private ArrayList<WiFiMeasure> wiFiMeasures = null;
+
+    private Report report = null;
 
     private int counter = 0;
 
@@ -112,6 +130,8 @@ public class ScheduledJobService extends Service implements SensorEventListener 
             public void run() {
                 if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     updateAll();
+                    buildReport();
+                    //startNotificationService();
                     if (counter == DATA_SENDING_INTERVAL) {
                         //if (gpsMeasure != null && (new Date().getTime() - gpsMeasure.getDate().getTime() <= GPS_VALID_TIME)) {
                          if(gpsMeasure != null) {
@@ -128,44 +148,87 @@ public class ScheduledJobService extends Service implements SensorEventListener 
                     }
                 } else {
                     gpsMeasure = null;
+                    updateNotification(false);
                 }
-                sendInfoToActivity(phoneInfo);
+                sendInfoToActivity();
                 handlerDataUpdating.postDelayed(this, DATA_UPDATING_INTERVAL);
             }
         }, DATA_UPDATING_INTERVAL);
+
+        if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Toast toast = Toast.makeText(this.getApplicationContext(), "Stiamo prelevando i dati...\nFermaci quando vuoi, cliccando su Stop nella tendina delle notifiche!", Toast.LENGTH_LONG);
+            TextView v = (TextView) toast.getView().findViewById(android.R.id.message);
+            if (v != null) v.setGravity(Gravity.CENTER);
+            toast.show();
+        }
+    }
+
+    public void updateNotification(boolean gpsEnabled) {
+        Notification notification = getNotification(gpsEnabled);
+
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(1, notification);
+    }
+
+    public Notification getNotification(boolean gpsEnabled) {
+        String caption = "";
+        if(gpsEnabled) {
+            caption = "Ultimo invio: Rilevamento...";
+            if(report != null) {
+                if(report.getTimestamp() != null) {
+                    caption = "Ultimo invio: " + report.getTimestamp().substring(0, report.getTimestamp().length() - 4);;
+                }
+            }
+        } else {
+            caption = "Per favore, abilita la Posizione.";
+        }
+
+        Intent notificationIntent = new Intent(this, InfoAnalysisActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                0, notificationIntent, 0);
+
+        Intent broadcastIntent = new Intent(this, NotificationReceiver.class);
+
+        PendingIntent actionIntent = PendingIntent.getBroadcast(this,
+                0, broadcastIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+        Bitmap largeIcon = BitmapFactory.decodeResource(getResources(), R.drawable.antenna);
+
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_antenna)
+                .setContentTitle("Tracking Status")
+                .setContentText(caption)
+                .setLargeIcon(largeIcon)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText("Premi su Stop per interrompere il Tracking!")
+                        .setBigContentTitle("Grazie per il tuo contributo!")
+                        .setSummaryText("Data Tracking"))
+
+                //.setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_STATUS)
+                .setContentIntent(pendingIntent)
+                .addAction(R.mipmap.ic_launcher, "Stop", actionIntent)
+                .build();
+
+        return notification;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String input = intent.getStringExtra("inputExtra");
 
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,
-                0, notificationIntent, 0);
-
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Example Service")
-                .setContentText(input)
-                .setContentIntent(pendingIntent)
-                .build();
-
-        startForeground(1, notification);
-
-        //do heavy work on a background thread
-        //stopSelf();
+        startForeground(1, getNotification(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)));
 
         return START_NOT_STICKY;
     }
+
 
     @Override
     public void onDestroy() {
         super.onDestroy();
     }
 
-    private void sendInfoToActivity(PhoneInfo phoneInfo) {
-        Intent intent = new Intent("infoUpdates");
-
-        Report report = new Report();
+    private void buildReport() {
+        report = new Report();
         if (phoneInfo != null) {
             report.setPhoneInfo(phoneInfo);
         }
@@ -181,10 +244,20 @@ public class ScheduledJobService extends Service implements SensorEventListener 
         if (emMeasure != null) {
             report.setEmMeasure(emMeasure);
         }
-        if (wiFiMeasures != null) {
-            report.setWifiMeasure(wiFiMeasures);
+        if (wifiManager.isWifiEnabled()){
+            report.setWiFiEnabled(true);
+            if (wiFiMeasures != null) {
+                report.setWifiMeasure(wiFiMeasures);
+            }
+        } else {
+            report.setWiFiEnabled(false);
         }
-        report.setDate(new Date());
+
+        report.setTimestamp(getTimeStamp());
+    }
+
+    private void sendInfoToActivity() {
+        Intent intent = new Intent("infoUpdates");
 
         Gson gson = new Gson();
         String reportJson = gson.toJson(report);
@@ -193,26 +266,6 @@ public class ScheduledJobService extends Service implements SensorEventListener 
     }
 
     public void sendData() {
-        Report report = new Report();
-        if (phoneInfo != null) {
-            report.setPhoneInfo(phoneInfo);
-        }
-        if (simInfo != null) {
-            report.setSimInfo(simInfo);
-        }
-        if (networkMeasure != null) {
-            report.setNetworkMeasure(networkMeasure);
-        }
-        if (gpsMeasure != null) {
-            report.setGpsMeasure(gpsMeasure);
-        }
-        if (emMeasure != null) {
-            report.setEmMeasure(emMeasure);
-        }
-        if (wiFiMeasures != null) {
-            report.setWifiMeasure(wiFiMeasures);
-        }
-        report.setDate(new Date());
 
         try {
             Gson gson = new Gson();
@@ -223,6 +276,7 @@ public class ScheduledJobService extends Service implements SensorEventListener 
             StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
                 @Override
                 public void onResponse(String response) {
+                    updateNotification(true);
                     //Toast.makeText(InfoAnalysisActivity.this, "Report inviato!",
                     //Toast.LENGTH_LONG).show();
                 }
@@ -269,6 +323,7 @@ public class ScheduledJobService extends Service implements SensorEventListener 
     public void initializeListeners() {
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
 
         initializeWifiManager();
         updateMagneticField();
@@ -280,6 +335,7 @@ public class ScheduledJobService extends Service implements SensorEventListener 
         updateSIMInfo();
         updateTelephonyManager();
     }
+
 
     public void updatePhoneInfo() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
@@ -521,7 +577,7 @@ public class ScheduledJobService extends Service implements SensorEventListener 
                     gpsMeasure = new GPSMeasure();
                     gpsMeasure.setLat(latMeasure);
                     gpsMeasure.setLng(lngMeasure);
-                    gpsMeasure.setDate(new Date());
+                    gpsMeasure.setTimestamp(getTimeStamp());
                 }
 
                 @Override
@@ -531,12 +587,12 @@ public class ScheduledJobService extends Service implements SensorEventListener 
 
                 @Override
                 public void onProviderEnabled(String provider) {
-
+                    updateNotification(true);
                 }
 
                 @Override
                 public void onProviderDisabled(String provider) {
-
+                    updateNotification(false);
                 }
             };
 
@@ -547,45 +603,8 @@ public class ScheduledJobService extends Service implements SensorEventListener 
         }
     }
 
-    public void getLastKnownLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            List<String> providers = locationManager.getAllProviders();
-            Location bestLoc = null;
-
-            for (int i = 0; i < providers.size(); i++) {
-                if(bestLoc != null) {
-                    if(locationManager.getLastKnownLocation(providers.get(i)).getTime() >= bestLoc.getTime()) {
-                        bestLoc = locationManager.getLastKnownLocation(providers.get(i));
-                    }
-                } else {
-                    bestLoc = locationManager.getLastKnownLocation(providers.get(i));
-                }
-            }
-
-            if(bestLoc != null) {
-                UnitMeasurement unitMeasurement = new UnitMeasurement();
-                unitMeasurement.setName("degree");
-
-                Measure latMeasure = new Measure();
-                latMeasure.setUnitMeasurement(unitMeasurement);
-                latMeasure.setValue(bestLoc.getLatitude());
-
-                Measure lngMeasure = new Measure();
-                lngMeasure.setUnitMeasurement(unitMeasurement);
-                lngMeasure.setValue(bestLoc.getLongitude());
-
-                gpsMeasure = new GPSMeasure();
-                gpsMeasure.setLat(latMeasure);
-                gpsMeasure.setLng(lngMeasure);
-                gpsMeasure.setDate(new Date());
-            }
-
-        }
-    }
-
 
     public void initializeWifiManager() {
-        wifiManager = (WifiManager) getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
 
         wifiManager.startScan(); // without starting scan, we may never receive any scan results
 
@@ -727,5 +746,9 @@ public class ScheduledJobService extends Service implements SensorEventListener 
                 wiFiMeasures.add(wiFiMeasure);
             }
         }
+    }
+
+    public String getTimeStamp() {
+        return new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS").format(new Timestamp(System.currentTimeMillis()));
     }
 }

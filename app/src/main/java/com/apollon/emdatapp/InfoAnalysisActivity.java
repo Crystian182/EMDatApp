@@ -8,9 +8,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.LocationManager;
 import android.provider.Settings;
+import android.support.v4.app.ServiceCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 import com.apollon.emdatapp.Model.Report;
 import com.apollon.emdatapp.Model.WiFiMeasure;
@@ -61,7 +64,15 @@ public class InfoAnalysisActivity extends AppCompatActivity {
                     alertOn = true;
                 }
             }
+        }
+    };
 
+    private BroadcastReceiver stopReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            stopService(new Intent(InfoAnalysisActivity.this,ScheduledJobService.class));
+            finishAndRemoveTask();
+            System.exit(0);
         }
     };
 
@@ -69,6 +80,8 @@ public class InfoAnalysisActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info_analysis);
+
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 
         imei = findViewById(R.id.imei);
         produttore = findViewById(R.id.produttore);
@@ -97,7 +110,24 @@ public class InfoAnalysisActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(InfoAnalysisActivity.this).registerReceiver(
                 mMessageReceiver, new IntentFilter("infoUpdates"));
 
+        LocalBroadcastManager.getInstance(InfoAnalysisActivity.this).registerReceiver(
+                stopReceiver, new IntentFilter("stopApp"));
+
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
     }
 
     @Override
@@ -111,6 +141,13 @@ public class InfoAnalysisActivity extends AppCompatActivity {
             alertOn = false;
         }
     }
+
+    /*@Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        unregisterReceiver(mMessageReceiver);
+    }*/
 
     public void resetFields() {
         imei.setText(loading);
@@ -211,14 +248,25 @@ public class InfoAnalysisActivity extends AppCompatActivity {
             lat.setText(loading);
             lng.setText(loading);
         }
-        if(report.getWifiMeasure() != null) {
-            String[] wifiRes = getWiFiStrings(report.getWifiMeasure());
-            wifi.setText(wifiRes[0]);
-            wifiLevel.setText(wifiRes[1]);
+        if(report.isWiFiEnabled()) {
+            if(report.getWifiMeasure() != null) {
+                if(report.getWifiMeasure().size() > 0) {
+                    String[] wifiRes = getWiFiStrings(report.getWifiMeasure());
+                    wifi.setText(wifiRes[0]);
+                    wifiLevel.setText(wifiRes[1]);
+                } else {
+                    wifi.setText(loading);
+                    wifiLevel.setText("");
+                }
+            } else {
+                wifi.setText(loading);
+                wifiLevel.setText("");
+            }
         } else {
-            wifi.setText(loading);
+            wifi.setText("Disconnessa");
             wifiLevel.setText("");
         }
+
     }
 
     private String[] getWiFiStrings(ArrayList<WiFiMeasure> measures) {
@@ -239,33 +287,35 @@ public class InfoAnalysisActivity extends AppCompatActivity {
     }
 
     private void showAlert() {
+        try {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-        builder.setTitle("Abilita Posizione");
-        builder.setMessage("Le impostazioni per il rilevamento della Posizione sono disattivate.\nPerfavore abilita la Posizione per continuare ad usare l'App");
-        builder.setPositiveButton("Impostazioni", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                startActivity(myIntent);
-            }
-        });
-        builder.setNegativeButton("Chiudi", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                if (!locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                    showAlert();
-                } else {
-                    dialog.dismiss();
-                    alertOn = false;
+            builder.setTitle("Abilita Posizione");
+            builder.setMessage("Le impostazioni per il rilevamento della Posizione sono disattivate.\nPerfavore abilita la Posizione per continuare ad usare l'App");
+            builder.setPositiveButton("Impostazioni", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                    Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivity(myIntent);
                 }
-            }
-        });
-        builder.setCancelable(false);
-        builder.show();
-        dialog = builder.create();
+            });
+            builder.setNegativeButton("Chiudi", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                    if (!locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                        showAlert();
+                    } else {
+                        dialog.dismiss();
+                        alertOn = false;
+                    }
+                }
+            });
+            builder.setCancelable(false);
+            builder.show();
+            dialog = builder.create();
+        } catch(Exception e){
 
+        }
     }
 
 }

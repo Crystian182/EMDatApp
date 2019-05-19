@@ -1,12 +1,12 @@
 package com.apollon.emdatapp.Model;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 public class GPSMeasure {
 
     private Measure lat;
     private Measure lng;
-    private Date date;
+    private String timestamp;
 
     public Measure getLat() {
         return lat;
@@ -24,11 +24,11 @@ public class GPSMeasure {
         this.lng = lng;
     }
 
-    public Date getDate() {
-        return date;
+    public String getTimestamp() {
+        return timestamp;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
     }
 }

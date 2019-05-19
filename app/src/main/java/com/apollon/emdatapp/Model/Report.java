@@ -1,7 +1,7 @@
 package com.apollon.emdatapp.Model;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 
 public class Report {
 
@@ -9,9 +9,10 @@ public class Report {
     private SIMInfo simInfo;
     private NetworkMeasure networkMeasure;
     private Measure emMeasure;
+    private boolean isWiFiEnabled;
     private ArrayList<WiFiMeasure> wifiMeasure;
     private GPSMeasure gpsMeasure;
-    private Date date;
+    private String timestamp;
 
     public PhoneInfo getPhoneInfo() {
         return phoneInfo;
@@ -45,6 +46,14 @@ public class Report {
         this.emMeasure = emMeasure;
     }
 
+    public boolean isWiFiEnabled() {
+        return isWiFiEnabled;
+    }
+
+    public void setWiFiEnabled(boolean wiFiEnabled) {
+        isWiFiEnabled = wiFiEnabled;
+    }
+
     public ArrayList<WiFiMeasure> getWifiMeasure() {
         return wifiMeasure;
     }
@@ -61,11 +70,11 @@ public class Report {
         this.gpsMeasure = gpsMeasure;
     }
 
-    public Date getDate() {
-        return date;
+    public String getTimestamp() {
+        return timestamp;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
     }
 }
