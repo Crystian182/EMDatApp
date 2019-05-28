@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "696878885598",
+    "firebase_url": "https://apollonapp.firebaseio.com",
+    "project_id": "apollonapp",
+    "storage_bucket": "apollonapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:696878885598:android:1de34c855db0f9c3",
+        "android_client_info": {
+          "package_name": "com.apollon.emdatapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "696878885598-rs0g7dfdskgt65fs0hhe9b415lovqvoa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqCjJ0PeVuf3QVnflZNoYU4n8Wm0ntw14"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "696878885598-rs0g7dfdskgt65fs0hhe9b415lovqvoa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

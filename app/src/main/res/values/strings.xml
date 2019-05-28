@@ -1,18 +1,44 @@
 <resources>
     <string name="app_name">EMDatApp</string>
-    <string name="edit_message">Enter a message</string>
-    <string name="button_send">Send</string>
-    <string name="title_activity_login">Accedi</string>
-    <!-- Strings related to login -->
-    <string name="prompt_email">Email</string>
-    <string name="prompt_password">Password (optional)</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="error_invalid_email">This email address is invalid</string>
-    <string name="error_invalid_password">This password is too short</string>
-    <string name="error_incorrect_password">This password is incorrect</string>
-    <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
+
+    <string name="action_sign_in_short">Registrati</string>
+    <string name="email">Email</string>
+    <string name="name">Nome</string>
+    <string name="surname">Cognome</string>
+    <string name="ssn">Codice Fiscale</string>
+    <string name="dob">Data di Nascita</string>
+    <string name="phone">Numero di Telefono</string>
+    <string name="streetnumber">Numero</string>
+    <string name="city">Città</string>
+    <string name="region">Regione</string>
+    <string name="country">Nazione</string>
+    <string name="province">Provincia</string>
+    <string name="addresstype">Tipo Indirizzo</string>
+    <string name="addressname">Indirizzo</string>
+    <string name="minimum_password">Password troppo corta, usa almeno 6 caratteri!</string>
+    <string name="auth_failed">Ops..qualcosa è andato storto! Controlla la tua email o la password!</string>
+    <string name="change_email">Cambia Email</string>
+    <string name="change_password">Cambia Password</string>
+    <string name="send_password_reset_email">Reset della Password</string>
+    <string name="remove_user">Rimuovi Utente</string>
+    <string name="new_pass">Nuova Password</string>
+    <string name="title_activity_profile">Firebase</string>
+    <string name="title_activity_login">Sign in</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_name">Fullname</string>
+    <string name="btn_login">LOGIN</string>
+    <string name="btn_link_to_register">Non sei iscritto? Registrati ora!</string>
+    <string name="btn_link_to_login">Sono già registrato!</string>
+    <string name="title_activity_reset_password">ResetPasswordActivity</string>
+    <string name="btn_forgot_password">Hai dimenticato la password?</string>
+    <string name="btn_reset_password">Reset Password</string>
+    <string name="btn_back"><![CDATA[<< Indietro]]></string>
+    <string name="hint_new_email">Nuova Email</string>
+    <string name="btn_change">Cambia</string>
+    <string name="btn_send">Invia</string>
+    <string name="btn_remove">Rimuovi</string>
+    <string name="btn_sign_out">Logout</string>
+    <string name="lbl_forgot_password">Hai dimenticato la password?</string>
+    <string name="forgot_password_msg">Inserisci la tua email per ricevere le istruzioni di reset della password.</string>
 </resources>

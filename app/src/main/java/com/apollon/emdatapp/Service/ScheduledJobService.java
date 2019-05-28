@@ -83,6 +83,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import static com.apollon.emdatapp.App.CHANNEL_ID;
 
@@ -176,7 +177,15 @@ public class ScheduledJobService extends Service implements SensorEventListener 
             caption = "Ultimo invio: Rilevamento...";
             if(report != null) {
                 if(report.getTimestamp() != null) {
-                    caption = "Ultimo invio: " + report.getTimestamp().substring(0, report.getTimestamp().length() - 4);;
+                    try {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+                        SimpleDateFormat newSdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+
+                        caption = "Ultimo invio: " + newSdf.format(sdf.parse(report.getTimestamp()));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+
                 }
             }
         } else {
@@ -749,6 +758,8 @@ public class ScheduledJobService extends Service implements SensorEventListener 
     }
 
     public String getTimeStamp() {
-        return new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS").format(new Timestamp(System.currentTimeMillis()));
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        sdf.setTimeZone(TimeZone.getTimeZone("CET"));
+        return sdf.format(new Date(System.currentTimeMillis()));
     }
 }
