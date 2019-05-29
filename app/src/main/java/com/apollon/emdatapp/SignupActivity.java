@@ -18,6 +18,7 @@ import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -29,12 +30,16 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.apollon.emdatapp.Model.Address;
 import com.apollon.emdatapp.Model.City;
 import com.apollon.emdatapp.Model.Country;
 import com.apollon.emdatapp.Model.Province;
 import com.apollon.emdatapp.Model.Region;
 import com.apollon.emdatapp.Model.Report;
+import com.apollon.emdatapp.Model.Smartphone;
+import com.apollon.emdatapp.Model.User;
 import com.apollon.emdatapp.Service.GeoService;
+import com.apollon.emdatapp.Service.UserService;
 import com.apollon.emdatapp.Service.VolleyCallback;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -67,8 +72,10 @@ public class SignupActivity extends AppCompatActivity {
     private TelephonyManager telephonyManager;
     private String deviceIMEI, manufacturer, model;
     GeoService geoService;
+    UserService userService;
 
     private Calendar myCalendar;
+    private String date_birth;
 
     ArrayList<Country> countries = new ArrayList<Country>();
     Country selectedCountry;
@@ -181,6 +188,20 @@ public class SignupActivity extends AppCompatActivity {
         }
     };
 
+    private BroadcastReceiver registerReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Get extra data included in the Intent
+
+            Toast.makeText(SignupActivity.this, "Registrazione completata con successo! Per favore, controlla la tua email per confermarla",
+                    Toast.LENGTH_LONG).show();
+            Intent intentBack = new Intent(SignupActivity.this, LoginActivity.class);
+            startActivity(intentBack);
+            finish();
+
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -214,6 +235,9 @@ public class SignupActivity extends AppCompatActivity {
 
         LocalBroadcastManager.getInstance(SignupActivity.this).registerReceiver(
                 mMessageReceiver, new IntentFilter("countryUpdates"));
+
+        LocalBroadcastManager.getInstance(SignupActivity.this).registerReceiver(
+                registerReceiver, new IntentFilter("registerUser"));
 
         geoService = new GeoService();
         geoService.getCountries(this);
@@ -372,14 +396,14 @@ public class SignupActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                String name = inputName.getText().toString().trim();
-                String surname = inputSurname.getText().toString().trim();
-                String ssn = inputSsn.getText().toString().trim();
-                String phone = inputPhone.getText().toString().trim();
-                String address = inputAddressName.getText().toString().trim();
-                String homenumber = inputStreetNumber.getText().toString().trim();
-                String email = inputEmail.getText().toString().trim();
-                String password = inputPassword.getText().toString().trim();
+                final String name = inputName.getText().toString().trim();
+                final String surname = inputSurname.getText().toString().trim();
+                final String ssn = inputSsn.getText().toString().trim();
+                final String phone = inputPhone.getText().toString().trim();
+                final String streetName = inputAddressName.getText().toString().trim();
+                final String homeNumber = inputStreetNumber.getText().toString().trim();
+                final String email = inputEmail.getText().toString().trim();
+                final String password = inputPassword.getText().toString().trim();
 
                 if (TextUtils.isEmpty(name)) {
                     Toast.makeText(getApplicationContext(), "Inserisci il tuo Nome!", Toast.LENGTH_SHORT).show();
@@ -408,7 +432,7 @@ public class SignupActivity extends AppCompatActivity {
                     return;
                 }
 
-                if(selectedCountry == null || selectedRegion == null || selectedProvince == null || selectedCity == null || TextUtils.isEmpty(address) || TextUtils.isEmpty(homenumber)) {
+                if(selectedCountry == null || selectedRegion == null || selectedProvince == null || selectedCity == null || TextUtils.isEmpty(streetName) || TextUtils.isEmpty(homeNumber)) {
                     Toast.makeText(getApplicationContext(), "Completa tutti i campi del tuo Indirizzo!", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -439,7 +463,7 @@ public class SignupActivity extends AppCompatActivity {
                                 // the auth state listener will be notified and logic to handle the
                                 // signed in user can be handled in the listener.
                                 if (!task.isSuccessful()) {
-                                    Toast.makeText(SignupActivity.this, "Autenticazione fallita." + task.getException(),
+                                    Toast.makeText(SignupActivity.this, "Registrazione fallita." + task.getException().getMessage(),
                                             Toast.LENGTH_SHORT).show();
                                 } else {
                                     auth.getCurrentUser().sendEmailVerification()
@@ -447,11 +471,34 @@ public class SignupActivity extends AppCompatActivity {
                                                 @Override
                                                 public void onComplete(@NonNull Task<Void> task) {
                                                     if(task.isSuccessful()) {
-                                                        Toast.makeText(SignupActivity.this, "Registrazione completata con successo! Per favore, controlla la tua email per confermarla",
-                                                                Toast.LENGTH_LONG).show();
-                                                        Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
-                                                        startActivity(intent);
-                                                        finish();
+
+                                                        Address address = new Address();
+                                                        address.setCountry(selectedCountry);
+                                                        address.setRegion(selectedRegion);
+                                                        address.setProvince(selectedProvince);
+                                                        address.setCity(selectedCity);
+                                                        address.setStreetName(streetName);
+                                                        address.setHomeNumber(homeNumber);
+
+                                                        Smartphone smartphone = new Smartphone();
+                                                        smartphone.setManufacturer(manufacturer);
+                                                        smartphone.setModel(model);
+                                                        smartphone.setImei(deviceIMEI);
+
+                                                        User user = new User();
+                                                        user.setName(name);
+                                                        user.setSurname(surname);
+                                                        user.setSsn(ssn);
+                                                        user.setDob(date_birth);
+                                                        user.setPhoneNumber(phone);
+                                                        user.setAddress(address);
+                                                        user.setEmail(email);
+                                                        user.setSmartphone(smartphone);
+
+                                                        userService = new UserService();
+                                                        userService.registerUser(getApplicationContext(), user);
+
+
                                                     } else {
                                                         Toast.makeText(SignupActivity.this, task.getException().getMessage(),
                                                                 Toast.LENGTH_SHORT).show();
@@ -477,7 +524,7 @@ public class SignupActivity extends AppCompatActivity {
     private void updateLabel() {
         String myFormat = "dd/MM/yyyy"; //In which you need put here
         SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.ITALY);
-
-        inputDob.setText(sdf.format(myCalendar.getTime()));
+        date_birth = sdf.format(myCalendar.getTime());
+        inputDob.setText(date_birth);
     }
 }
