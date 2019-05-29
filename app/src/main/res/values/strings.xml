@@ -8,7 +8,7 @@
     <string name="ssn">Codice Fiscale</string>
     <string name="dob">Data di Nascita</string>
     <string name="phone">Numero di Telefono</string>
-    <string name="streetnumber">Numero</string>
+    <string name="streetnumber">N°</string>
     <string name="city">Città</string>
     <string name="region">Regione</string>
     <string name="country">Nazione</string>

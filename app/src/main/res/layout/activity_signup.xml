@@ -31,6 +31,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <TextView
+                android:id="@+id/personalData"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:text="Dati Personali"
+                android:textSize="30sp" />
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
         <EditText
             android:id="@+id/name"
             android:layout_width="match_parent"
@@ -77,15 +91,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-        <EditText
-            android:id="@+id/dob"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/dob"
-            android:inputType="date"
-            android:maxLines="1"
-            android:singleLine="true"
-            android:textColor="@android:color/white" />
+            <EditText
+                android:id="@+id/dob"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:editable="false"
+                android:focusable="false"
+                android:hint="Data di Nascita"/>
         </android.support.design.widget.TextInputLayout>
 
         <android.support.design.widget.TextInputLayout
@@ -97,7 +110,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/phone"
-            android:inputType="phone"
+            android:inputType="date"
             android:maxLines="1"
             android:singleLine="true"
             android:textColor="@android:color/white" />
@@ -108,21 +121,43 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <TextView
+                android:id="@+id/address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:text="Indirizzo"
+                android:textSize="30sp"
+                android:paddingTop="7pt"
+                android:paddingBottom="4pt"/>
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:id="@+id/view1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:id="@+id/country"
+                    android:layout_width="150dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:text=" Nazione"
+                    android:textSize="18sp" />
+
             <Spinner
-                android:id="@+id/spinner"
+                android:id="@+id/spinnerCountry"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
 
-            <EditText
-                android:id="@+id/country"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/country"
-                android:inputType="text"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:textColor="@android:color/white" />
+            </LinearLayout>
 
         </android.support.design.widget.TextInputLayout>
 
@@ -130,15 +165,27 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <EditText
-                android:id="@+id/region"
+            <LinearLayout
+                android:id="@+id/view2"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:id="@+id/region"
+                    android:layout_width="150dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:text=" Regione"
+                    android:textSize="18sp" />
+
+            <Spinner
+                android:id="@+id/spinnerRegion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/region"
-                android:inputType="text"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:textColor="@android:color/white" />
+                android:layout_weight="1"/>
+
+            </LinearLayout>
 
         </android.support.design.widget.TextInputLayout>
 
@@ -146,15 +193,27 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <EditText
-                android:id="@+id/province"
+            <LinearLayout
+                android:id="@+id/view3"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:id="@+id/province"
+                    android:layout_width="150dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:text=" Provincia"
+                    android:textSize="18sp" />
+
+            <Spinner
+                android:id="@+id/spinnerProvince"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/province"
-                android:inputType="text"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:textColor="@android:color/white" />
+                android:layout_weight="1"/>
+
+            </LinearLayout>
 
         </android.support.design.widget.TextInputLayout>
 
@@ -162,15 +221,27 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <EditText
-                android:id="@+id/city"
+            <LinearLayout
+                android:id="@+id/view4"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:id="@+id/city"
+                    android:layout_width="150dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:text=" Città"
+                    android:textSize="18sp" />
+
+            <Spinner
+                android:id="@+id/spinnerCity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/city"
-                android:inputType="text"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:textColor="@android:color/white" />
+                android:layout_weight="1"/>
+
+            </LinearLayout>
 
         </android.support.design.widget.TextInputLayout>
 
@@ -178,15 +249,33 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <EditText
-                android:id="@+id/addresstype"
+            <LinearLayout
+                android:id="@+id/view5"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/addresstype"
-                android:inputType="text"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:textColor="@android:color/white" />
+                android:layout_height="match_parent"
+                android:orientation="horizontal" >
+
+                <EditText
+                    android:id="@+id/addressname"
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/addressname"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="@android:color/white" />
+
+                <EditText
+                    android:id="@+id/streetnumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/streetnumber"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:textColor="@android:color/white" />
+
+            </LinearLayout>
 
         </android.support.design.widget.TextInputLayout>
 
@@ -194,15 +283,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <EditText
-                android:id="@+id/addressname"
+            <TextView
+                android:id="@+id/smartphone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/addressname"
-                android:inputType="text"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:textColor="@android:color/white" />
+                android:layout_alignParentTop="true"
+                android:text="Smartphone"
+                android:textSize="30sp"
+                android:paddingTop="7pt"
+                android:paddingBottom="1pt"/>
 
         </android.support.design.widget.TextInputLayout>
 
@@ -210,15 +299,108 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <EditText
-                android:id="@+id/streetnumber"
+            <LinearLayout
+                android:id="@+id/view6"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/manufacturerLabel"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:text="Produttore"
+                android:textSize="18dp" />
+
+            <TextView
+                android:id="@+id/manufacturer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/streetnumber"
-                android:inputType="text"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:textColor="@android:color/white" />
+                android:layout_alignParentTop="true"
+                android:text="TextView"
+                android:textAlignment="textEnd"
+                android:textSize="18dp"/>
+
+            </LinearLayout>
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:id="@+id/view7"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:id="@+id/modelLabel"
+                    android:layout_width="150dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:text="Modello"
+                    android:textSize="18dp"/>
+
+                <TextView
+                    android:id="@+id/model"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:text="TextView"
+                    android:textAlignment="textEnd"
+                    android:textSize="18dp"/>
+
+            </LinearLayout>
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:id="@+id/view8"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:id="@+id/imeiLabel"
+                    android:layout_width="150dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:text="IMEI"
+                    android:textSize="18dp"/>
+
+                <TextView
+                    android:id="@+id/imei"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:text="TextView"
+                    android:textAlignment="textEnd"
+                    android:textSize="18dp"/>
+
+            </LinearLayout>
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/account"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:text="Account"
+                android:textSize="30sp"
+                android:paddingTop="7pt"
+                android:paddingBottom="1pt"/>
 
         </android.support.design.widget.TextInputLayout>
 
@@ -276,18 +458,6 @@
             android:textAllCaps="false"
             android:textColor="@color/colorAccent" />
 
-        <!-- Link to Login Screen -->
-
-        <Button
-            android:id="@+id/sign_in_button"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dip"
-            android:background="@null"
-            android:text="@string/btn_link_to_login"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="15dp" />
     </LinearLayout>
 
     <ProgressBar

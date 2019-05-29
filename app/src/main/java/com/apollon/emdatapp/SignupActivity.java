@@ -1,37 +1,185 @@
 package com.apollon.emdatapp;
 
+import android.Manifest;
+import android.app.DatePickerDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.location.LocationManager;
+import android.os.Build;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.apollon.emdatapp.Model.City;
+import com.apollon.emdatapp.Model.Country;
+import com.apollon.emdatapp.Model.Province;
+import com.apollon.emdatapp.Model.Region;
+import com.apollon.emdatapp.Model.Report;
 import com.apollon.emdatapp.Service.GeoService;
+import com.apollon.emdatapp.Service.VolleyCallback;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.gson.Gson;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import java.lang.reflect.Array;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Locale;
 
 public class SignupActivity extends AppCompatActivity {
 
-    private EditText inputEmail, inputPassword;
-    private Button btnSignIn, btnSignUp, btnResetPassword;
-    private Spinner countrySpinner;
+    private EditText inputName, inputSurname, inputSsn, inputDob, inputPhone, inputAddressName, inputStreetNumber, inputEmail, inputPassword;
+    private Button btnSignUp, btnResetPassword;
+    private Spinner countrySpinner, regionSpinner, provinceSpinner, citySpinner;
+    private TextView imei, produttore, modello;
     private ProgressBar progressBar;
     private FirebaseAuth auth;
+    private TelephonyManager telephonyManager;
+    private String deviceIMEI, manufacturer, model;
+    GeoService geoService;
+
+    private Calendar myCalendar;
+
+    ArrayList<Country> countries = new ArrayList<Country>();
+    Country selectedCountry;
+    ArrayList<Region> regions = new ArrayList<Region>();
+    Region selectedRegion;
+    ArrayList<Province> provinces = new ArrayList<Province>();
+    Province selectedProvince;
+    ArrayList<City> cities = new ArrayList<City>();
+    City selectedCity;
+
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Get extra data included in the Intent
+
+            if (intent.getStringExtra("type").equals("countries")) {
+                ArrayList<String> countriesName = new ArrayList<String>();
+
+                try {
+                    String reportString = intent.getStringExtra("countries");
+                    JSONObject json = new JSONObject(reportString);
+                    JSONArray jsonCountries = json.getJSONArray("geonames");
+
+                    for (int i = 0; i < jsonCountries.length(); i++) {
+                        JSONObject jsoncountry = jsonCountries.getJSONObject(i);
+                        Country country = new Country();
+                        country.setId((Integer) jsoncountry.get("geonameId"));
+                        country.setName((String) jsoncountry.get("countryName"));
+                        countries.add(country);
+                        countriesName.add(country.getName());
+                    }
+                    Collections.sort(countriesName, String.CASE_INSENSITIVE_ORDER);
+                    countriesName.add(0, "Scegli una Nazione");
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, countriesName);
+                    countrySpinner.setAdapter(adapter);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if (intent.getStringExtra("type").equals("children1")) {
+                ArrayList<String> regionsName = new ArrayList<String>();
+
+                try {
+                    String reportString = intent.getStringExtra("children1");
+                    JSONObject json = new JSONObject(reportString);
+                    JSONArray jsonRegions = json.getJSONArray("geonames");
+
+                    for (int i = 0; i < jsonRegions.length(); i++) {
+                        JSONObject jsonregion = jsonRegions.getJSONObject(i);
+                        Region region = new Region();
+                        region.setId((Integer) jsonregion.get("geonameId"));
+                        region.setName((String) jsonregion.get("toponymName"));
+                        regions.add(region);
+                        regionsName.add(region.getName());
+                    }
+                    Collections.sort(regionsName, String.CASE_INSENSITIVE_ORDER);
+                    regionsName.add(0, "Scegli una Regione");
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, regionsName);
+                    regionSpinner.setAdapter(adapter);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if (intent.getStringExtra("type").equals("children2")) {
+                ArrayList<String> provincesName = new ArrayList<String>();
+
+                try {
+                    String reportString = intent.getStringExtra("children2");
+                    JSONObject json = new JSONObject(reportString);
+                    JSONArray jsonProvinces = json.getJSONArray("geonames");
+
+                    for (int i = 0; i < jsonProvinces.length(); i++) {
+                        JSONObject jsonprovince = jsonProvinces.getJSONObject(i);
+                        Province province = new Province();
+                        province.setId((Integer) jsonprovince.get("geonameId"));
+                        province.setName((String) jsonprovince.get("toponymName"));
+                        provinces.add(province);
+                        provincesName.add(province.getName());
+                    }
+                    Collections.sort(provincesName, String.CASE_INSENSITIVE_ORDER);
+                    provincesName.add(0, "Scegli una Provincia");
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, provincesName);
+                    provinceSpinner.setAdapter(adapter);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if (intent.getStringExtra("type").equals("children3")) {
+                ArrayList<String> citiesName = new ArrayList<String>();
+
+                try {
+                    String reportString = intent.getStringExtra("children3");
+                    JSONObject json = new JSONObject(reportString);
+                    JSONArray jsonCities = json.getJSONArray("geonames");
+
+                    for (int i = 0; i < jsonCities.length(); i++) {
+                        JSONObject jsoncity = jsonCities.getJSONObject(i);
+                        City city = new City();
+                        city.setId((Integer) jsoncity.get("geonameId"));
+                        city.setName((String) jsoncity.get("toponymName"));
+                        cities.add(city);
+                        citiesName.add(city.getName());
+                    }
+                    Collections.sort(citiesName, String.CASE_INSENSITIVE_ORDER);
+                    citiesName.add(0, "Scegli una Città");
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, citiesName);
+                    citySpinner.setAdapter(adapter);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,15 +189,177 @@ public class SignupActivity extends AppCompatActivity {
         //Get Firebase auth instance
         auth = FirebaseAuth.getInstance();
 
-        btnSignIn = (Button) findViewById(R.id.sign_in_button);
         btnSignUp = (Button) findViewById(R.id.sign_up_button);
-        countrySpinner = (Spinner) findViewById(R.id.spinner);
+        countrySpinner = (Spinner) findViewById(R.id.spinnerCountry);
+        regionSpinner = (Spinner) findViewById(R.id.spinnerRegion);
+        provinceSpinner = (Spinner) findViewById(R.id.spinnerProvince);
+        citySpinner = (Spinner) findViewById(R.id.spinnerCity);
+        inputName = (EditText) findViewById(R.id.name);
+        inputSurname = (EditText) findViewById(R.id.surname);
+        inputName = (EditText) findViewById(R.id.name);
+        inputSsn = (EditText) findViewById(R.id.ssn);
+        inputPhone = (EditText) findViewById(R.id.phone);
+        inputAddressName = (EditText) findViewById(R.id.addressname);
+        inputStreetNumber = (EditText) findViewById(R.id.streetnumber);
         inputEmail = (EditText) findViewById(R.id.email);
         inputPassword = (EditText) findViewById(R.id.password);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         btnResetPassword = (Button) findViewById(R.id.btn_reset_password);
 
-        getCountryList();
+        inputDob = (EditText) findViewById(R.id.dob);
+
+        imei = findViewById(R.id.imei);
+        produttore = findViewById(R.id.manufacturer);
+        modello = findViewById(R.id.model);
+
+        LocalBroadcastManager.getInstance(SignupActivity.this).registerReceiver(
+                mMessageReceiver, new IntentFilter("countryUpdates"));
+
+        geoService = new GeoService();
+        geoService.getCountries(this);
+
+        ArrayList<String> regionDefault = new ArrayList<String>();
+        regionDefault.add("Scegli una Regione");
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, regionDefault);
+        regionSpinner.setAdapter(adapter);
+        ArrayList<String> provinceDefault = new ArrayList<String>();
+        provinceDefault.add("Scegli una Provincia");
+        ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, provinceDefault);
+        provinceSpinner.setAdapter(adapter2);
+        ArrayList<String> cityDefault = new ArrayList<String>();
+        cityDefault.add("Scegli una Città");
+        ArrayAdapter<String> adapter3 = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, cityDefault);
+        citySpinner.setAdapter(adapter3);
+
+        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+            deviceIMEI = telephonyManager.getDeviceId();
+            manufacturer = Build.MANUFACTURER;
+            model = Build.MODEL;
+            imei.setText(deviceIMEI);
+            produttore.setText(manufacturer);
+            modello.setText(model);
+        }
+
+        myCalendar = Calendar.getInstance();
+        final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
+
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                myCalendar.set(Calendar.YEAR, year);
+                myCalendar.set(Calendar.MONTH, month);
+                myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                updateLabel();
+            }
+
+        };
+
+        inputDob.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                new DatePickerDialog(SignupActivity.this, date, myCalendar
+                        .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
+                        myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+            }
+        });
+
+        countrySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                ((TextView) parent.getChildAt(0)).setTextColor(Color.WHITE);
+                selectedRegion = null;
+                selectedProvince = null;
+                selectedCity = null;
+                for (Country country : countries) {
+                    if (parent.getSelectedItem().toString().equals(country.getName())) {
+                        selectedCountry = country;
+                        break;
+                    }
+                }
+                if(selectedCountry != null) {
+                    geoService.getChildren1(getApplicationContext(), selectedCountry.getId());
+                    selectedRegion = null;
+                    selectedProvince = null;
+                    selectedCity = null;
+                    //provinces = null;
+                    //cities = null;
+                    ArrayList<String> provinceDefault = new ArrayList<String>();
+                    provinceDefault.add("Scegli una Provincia");
+                    ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, provinceDefault);
+                    provinceSpinner.setAdapter(adapter2);
+                    ArrayList<String> cityDefault = new ArrayList<String>();
+                    cityDefault.add("Scegli una Città");
+                    ArrayAdapter<String> adapter3 = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, cityDefault);
+                    citySpinner.setAdapter(adapter3);
+                }
+            }
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        regionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                ((TextView) parent.getChildAt(0)).setTextColor(Color.WHITE);
+                selectedProvince = null;
+                selectedCity = null;
+                for (Region region : regions) {
+                    if (parent.getSelectedItem().toString().equals(region.getName())) {
+                        selectedRegion = region;
+                        break;
+                    }
+                }
+                if (selectedRegion != null) {
+                    geoService.getChildren2(getApplicationContext(), selectedRegion.getId());
+                    selectedProvince = null;
+                    selectedCity = null;
+                    //cities = null;
+                    ArrayList<String> cityDefault = new ArrayList<String>();
+                    cityDefault.add("Scegli una Città");
+                    ArrayAdapter<String> adapter3 = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, cityDefault);
+                    citySpinner.setAdapter(adapter3);
+                }
+            }
+
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        provinceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                ((TextView) parent.getChildAt(0)).setTextColor(Color.WHITE);
+                selectedCity = null;
+                if (provinces != null) {
+                    for (Province province : provinces) {
+                        if (parent.getSelectedItem().toString().equals(province.getName())) {
+                            selectedProvince = province;
+                            break;
+                        }
+                    }
+                    if (selectedProvince != null) {
+                        geoService.getChildren3(getApplicationContext(), selectedProvince.getId());
+                    }
+                }
+            }
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        citySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                ((TextView) parent.getChildAt(0)).setTextColor(Color.WHITE);
+                if (cities != null) {
+                    for (City city : cities) {
+                        if (parent.getSelectedItem().toString().equals(city.getName())) {
+                            selectedCity = city;
+                            break;
+                        }
+                    }
+                }
+            }
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
 
         btnResetPassword.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -58,32 +368,63 @@ public class SignupActivity extends AppCompatActivity {
             }
         });
 
-        btnSignIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-
         btnSignUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
+                String name = inputName.getText().toString().trim();
+                String surname = inputSurname.getText().toString().trim();
+                String ssn = inputSsn.getText().toString().trim();
+                String phone = inputPhone.getText().toString().trim();
+                String address = inputAddressName.getText().toString().trim();
+                String homenumber = inputStreetNumber.getText().toString().trim();
                 String email = inputEmail.getText().toString().trim();
                 String password = inputPassword.getText().toString().trim();
 
+                if (TextUtils.isEmpty(name)) {
+                    Toast.makeText(getApplicationContext(), "Inserisci il tuo Nome!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (TextUtils.isEmpty(surname)) {
+                    Toast.makeText(getApplicationContext(), "Inserisci il tuo Cognome!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (TextUtils.isEmpty(ssn)) {
+                    Toast.makeText(getApplicationContext(), "Inserisci il tuo Codice Fiscale!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if(Period.between(myCalendar.getTime().toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate(), LocalDate.now()).getYears() < 18) {
+                    Toast.makeText(getApplicationContext(), "Devi essere maggiorenne per utilizzare il servizio!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (TextUtils.isEmpty(phone)) {
+                    Toast.makeText(getApplicationContext(), "Inserisci il tuo Numero di Telefono!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if(selectedCountry == null || selectedRegion == null || selectedProvince == null || selectedCity == null || TextUtils.isEmpty(address) || TextUtils.isEmpty(homenumber)) {
+                    Toast.makeText(getApplicationContext(), "Completa tutti i campi del tuo Indirizzo!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 if (TextUtils.isEmpty(email)) {
-                    Toast.makeText(getApplicationContext(), "Enter email address!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Inserisci il tuo Indirizzo Email!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 if (TextUtils.isEmpty(password)) {
-                    Toast.makeText(getApplicationContext(), "Enter password!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Inserisci la tua Password!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 if (password.length() < 6) {
-                    Toast.makeText(getApplicationContext(), "Password too short, enter minimum 6 characters!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "La Password è troppo corta. Sono richiesti minimo 6 caratteri!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -133,21 +474,10 @@ public class SignupActivity extends AppCompatActivity {
         progressBar.setVisibility(View.GONE);
     }
 
-    public void getCountryList() {
-        GeoService geoService = new GeoService();
-        geoService.getCountries(this);
-        Locale[] locale = Locale.getAvailableLocales();
-        ArrayList<String> countries = new ArrayList<String>();
-        String country;
-        for(Locale loc: locale) {
-            country = loc.getDisplayCountry();
-            if(country.length() > 0 && !countries.contains(country)) {
-                countries.add(country);
-            }
-        }
-        Collections.sort(countries, String.CASE_INSENSITIVE_ORDER);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, countries);
-        countrySpinner.setAdapter(adapter);
+    private void updateLabel() {
+        String myFormat = "dd/MM/yyyy"; //In which you need put here
+        SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.ITALY);
 
+        inputDob.setText(sdf.format(myCalendar.getTime()));
     }
 }
