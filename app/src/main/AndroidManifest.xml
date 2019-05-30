@@ -25,15 +25,16 @@
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:usesCleartextTraffic="true">
         <activity android:name=".ResetPasswordActivity"></activity>
-        <activity android:name=".MainActivity" />
-        <activity android:name=".SignupActivity" />
+        <activity android:name=".SignupActivity"
+            android:windowSoftInputMode="stateVisible|adjustPan"/>
 
         <uses-library
             android:name="org.apache.http.legacy"
             android:required="false" />
 
         <activity android:name=".InfoAnalysisActivity" />
-        <activity android:name=".LoginActivity">
+        <activity android:name=".LoginActivity"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

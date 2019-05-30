@@ -1,6 +1,7 @@
 package com.apollon.emdatapp;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,7 +20,9 @@ import android.support.annotation.NonNull;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -292,6 +295,7 @@ public class SignupActivity extends AppCompatActivity {
         countrySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 ((TextView) parent.getChildAt(0)).setTextColor(Color.WHITE);
+
                 selectedRegion = null;
                 selectedProvince = null;
                 selectedCity = null;
@@ -384,6 +388,38 @@ public class SignupActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
+
+        countrySpinner.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                hideSoftKeyboard(SignupActivity.this);
+                return false;
+            }
+        }) ;
+
+        regionSpinner.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                hideSoftKeyboard(SignupActivity.this);
+                return false;
+            }
+        }) ;
+
+        provinceSpinner.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                hideSoftKeyboard(SignupActivity.this);
+                return false;
+            }
+        }) ;
+
+        citySpinner.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                hideSoftKeyboard(SignupActivity.this);
+                return false;
+            }
+        }) ;
 
         btnResetPassword.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -522,9 +558,21 @@ public class SignupActivity extends AppCompatActivity {
     }
 
     private void updateLabel() {
-        String myFormat = "dd/MM/yyyy"; //In which you need put here
-        SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.ITALY);
+        String SQLFormat = "yyyy-MM-dd"; //In which you need put here
+        SimpleDateFormat sdf = new SimpleDateFormat(SQLFormat, Locale.ITALY);
         date_birth = sdf.format(myCalendar.getTime());
-        inputDob.setText(date_birth);
+        String myFormat = "dd/MM/yyyy"; //In which you need put here
+        SimpleDateFormat sdf2 = new SimpleDateFormat(myFormat, Locale.ITALY);
+        inputDob.setText(sdf2.format(myCalendar.getTime()));
+    }
+
+    public static void hideSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager =
+                (InputMethodManager) activity.getSystemService(
+                        Activity.INPUT_METHOD_SERVICE);
+        if(activity.getCurrentFocus() != null) {
+            inputMethodManager.hideSoftInputFromWindow(
+                    activity.getCurrentFocus().getWindowToken(), 0);
+        }
     }
 }

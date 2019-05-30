@@ -55,7 +55,6 @@ import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.apollon.emdatapp.InfoAnalysisActivity;
-import com.apollon.emdatapp.MainActivity;
 import com.apollon.emdatapp.Model.GPSMeasure;
 import com.apollon.emdatapp.Model.Measure;
 import com.apollon.emdatapp.Model.Network;
@@ -133,7 +132,7 @@ public class ScheduledJobService extends Service implements SensorEventListener 
                     updateAll();
                     buildReport();
                     //startNotificationService();
-                    if (counter == DATA_SENDING_INTERVAL) {
+                    if (counter == DATA_SENDING_INTERVAL-2) {
                         //if (gpsMeasure != null && (new Date().getTime() - gpsMeasure.getDate().getTime() <= GPS_VALID_TIME)) {
                          if(gpsMeasure != null) {
                             sendData();

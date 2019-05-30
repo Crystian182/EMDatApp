@@ -37,6 +37,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:text="Dati Personali"
+                android:textColor="@color/colorAccent"
                 android:textSize="30sp" />
 
         </android.support.design.widget.TextInputLayout>
@@ -127,6 +128,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:text="Indirizzo"
+                android:textColor="@color/colorAccent"
                 android:textSize="30sp"
                 android:paddingTop="7pt"
                 android:paddingBottom="4pt"/>
@@ -289,6 +291,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:text="Smartphone"
+                android:textColor="@color/colorAccent"
                 android:textSize="30sp"
                 android:paddingTop="7pt"
                 android:paddingBottom="1pt"/>
@@ -398,6 +401,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:text="Account"
+                android:textColor="@color/colorAccent"
                 android:textSize="30sp"
                 android:paddingTop="7pt"
                 android:paddingBottom="1pt"/>
@@ -421,7 +425,8 @@
 
         <android.support.design.widget.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            app:passwordToggleEnabled="true">
 
         <EditText
                 android:id="@+id/password"

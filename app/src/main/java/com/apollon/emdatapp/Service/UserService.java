@@ -24,7 +24,7 @@ import java.io.UnsupportedEncodingException;
 
 public class UserService extends Service {
 
-    private final String BACKEND_ADDRESS = "192.168.1.2:8000";
+    private final String BACKEND_ADDRESS = "51.68.124.145:8000";
 
     @Nullable
     @Override
@@ -49,7 +49,7 @@ public class UserService extends Service {
         try {
             Gson gson = new Gson();
             RequestQueue requestQueue = Volley.newRequestQueue(context);
-            String URL = "http://" + BACKEND_ADDRESS + "/user";
+            String URL = "http://" + BACKEND_ADDRESS + "/persona/register";
             final String requestBody = gson.toJson(user);
 
             StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {

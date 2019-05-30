@@ -18,6 +18,7 @@ import android.widget.TextView;
 import com.apollon.emdatapp.Model.Report;
 import com.apollon.emdatapp.Model.WiFiMeasure;
 import com.apollon.emdatapp.Service.ScheduledJobService;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.Gson;
 import java.util.ArrayList;
 
@@ -28,6 +29,8 @@ public class InfoAnalysisActivity extends AppCompatActivity {
     private boolean alertOn = false;
     private LocationManager locationManager;
     AlertDialog dialog;
+
+    private FirebaseAuth auth;
 
     private TextView imei;
     private TextView produttore;
@@ -79,41 +82,53 @@ public class InfoAnalysisActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_info_analysis);
 
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        auth = FirebaseAuth.getInstance();
 
-        imei = findViewById(R.id.imei);
-        produttore = findViewById(R.id.produttore);
-        modello = findViewById(R.id.modello);
-        tipoReteVoceCellulare = findViewById(R.id.tipoReteVoceCellulare);
-        generazioneReteVoceCellulare = findViewById(R.id.generazioneReteVoceCellulare);
-        tipoReteDatiCellulare = findViewById(R.id.tipoReteDatiCellulare);
-        generazioneReteDatiCellulare = findViewById(R.id.generazioneReteDatiCellulare);
-        connessioneDati = findViewById(R.id.connessioneDati);
-        potenzaSegnale = findViewById(R.id.potenzaSegnale);
-        serialeSim = findViewById(R.id.serialeSim);
-        networkCountry = findViewById(R.id.networkCountry);
-        simCountry = findViewById(R.id.simCountry);
-        operatore = findViewById(R.id.operatore);
-        wifi = findViewById(R.id.wifi);
-        valueEM = findViewById(R.id.valueEM);
-        lat = findViewById(R.id.lat);
-        lng = findViewById(R.id.lng);
-        wifiLevel = findViewById(R.id.wifiLevel);
+        if (auth.getCurrentUser() == null) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
 
-        resetFields();
+            stopService(new Intent(InfoAnalysisActivity.this,ScheduledJobService.class));
+            finishAndRemoveTask();
+        } else {
+            setContentView(R.layout.activity_info_analysis);
 
-        //Intent intent = new Intent(InfoAnalysisActivity.this, ScheduledJobService.class);
-        //startService(intent);
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 
-        LocalBroadcastManager.getInstance(InfoAnalysisActivity.this).registerReceiver(
-                mMessageReceiver, new IntentFilter("infoUpdates"));
+            imei = findViewById(R.id.imei);
+            produttore = findViewById(R.id.produttore);
+            modello = findViewById(R.id.modello);
+            tipoReteVoceCellulare = findViewById(R.id.tipoReteVoceCellulare);
+            generazioneReteVoceCellulare = findViewById(R.id.generazioneReteVoceCellulare);
+            tipoReteDatiCellulare = findViewById(R.id.tipoReteDatiCellulare);
+            generazioneReteDatiCellulare = findViewById(R.id.generazioneReteDatiCellulare);
+            connessioneDati = findViewById(R.id.connessioneDati);
+            potenzaSegnale = findViewById(R.id.potenzaSegnale);
+            serialeSim = findViewById(R.id.serialeSim);
+            networkCountry = findViewById(R.id.networkCountry);
+            simCountry = findViewById(R.id.simCountry);
+            operatore = findViewById(R.id.operatore);
+            wifi = findViewById(R.id.wifi);
+            valueEM = findViewById(R.id.valueEM);
+            lat = findViewById(R.id.lat);
+            lng = findViewById(R.id.lng);
+            wifiLevel = findViewById(R.id.wifiLevel);
 
-        LocalBroadcastManager.getInstance(InfoAnalysisActivity.this).registerReceiver(
-                stopReceiver, new IntentFilter("stopApp"));
+            resetFields();
 
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+            //Intent intent = new Intent(InfoAnalysisActivity.this, ScheduledJobService.class);
+            //startService(intent);
+
+            LocalBroadcastManager.getInstance(InfoAnalysisActivity.this).registerReceiver(
+                    mMessageReceiver, new IntentFilter("infoUpdates"));
+
+            LocalBroadcastManager.getInstance(InfoAnalysisActivity.this).registerReceiver(
+                    stopReceiver, new IntentFilter("stopApp"));
+
+            locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        }
     }
 
     @Override
@@ -316,6 +331,19 @@ public class InfoAnalysisActivity extends AppCompatActivity {
         } catch(Exception e){
 
         }
+    }
+
+    public void logout(View view) {
+
+        auth.signOut();
+
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+
+        stopService(new Intent(InfoAnalysisActivity.this,ScheduledJobService.class));
+        finishAndRemoveTask();
+
     }
 
 }
