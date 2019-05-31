@@ -45,25 +45,17 @@ public class LoginActivity extends AppCompatActivity {
         //Get Firebase auth instance
         auth = FirebaseAuth.getInstance();
 
-        if (auth.getCurrentUser() != null) {
-            Intent intent = new Intent(LoginActivity.this, InfoAnalysisActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
 
-            Intent serviceIntent = new Intent(LoginActivity.this, ScheduledJobService.class);
-            ContextCompat.startForegroundService(LoginActivity.this, serviceIntent);
+            if (auth.getCurrentUser() != null && auth.getCurrentUser().isEmailVerified()) {
+                Intent intent = new Intent(LoginActivity.this, InfoAnalysisActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
 
-            finish();
-        } else {
-            setContentView(R.layout.activity_login);
+                Intent serviceIntent = new Intent(LoginActivity.this, ScheduledJobService.class);
+                ContextCompat.startForegroundService(LoginActivity.this, serviceIntent);
 
-
-
-        /*if (auth.getCurrentUser() != null) {
-            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-            finish();
-        }*/
-
+                finish();
+            } else {
             // set the view now
             setContentView(R.layout.activity_login);
 

@@ -177,7 +177,7 @@ public class ScheduledJobService extends Service implements SensorEventListener 
             if(report != null) {
                 if(report.getTimestamp() != null) {
                     try {
-                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
                         SimpleDateFormat newSdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
                         caption = "Ultimo invio: " + newSdf.format(sdf.parse(report.getTimestamp()));
@@ -757,8 +757,7 @@ public class ScheduledJobService extends Service implements SensorEventListener 
     }
 
     public String getTimeStamp() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-        sdf.setTimeZone(TimeZone.getTimeZone("CET"));
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
         return sdf.format(new Date(System.currentTimeMillis()));
     }
 }
