@@ -12,6 +12,7 @@ public class Report {
     private boolean isWiFiEnabled;
     private ArrayList<WiFiMeasure> wifiMeasure;
     private GPSMeasure gpsMeasure;
+    private String userID;
     private String timestamp;
 
     public PhoneInfo getPhoneInfo() {
@@ -68,6 +69,14 @@ public class Report {
 
     public void setGpsMeasure(GPSMeasure gpsMeasure) {
         this.gpsMeasure = gpsMeasure;
+    }
+
+    public String getUserID() {
+        return userID;
+    }
+
+    public void setUserID(String userID) {
+        this.userID = userID;
     }
 
     public String getTimestamp() {

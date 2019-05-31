@@ -66,6 +66,7 @@ import com.apollon.emdatapp.Model.UnitMeasurement;
 import com.apollon.emdatapp.Model.WiFiMeasure;
 import com.apollon.emdatapp.Notification.NotificationReceiver;
 import com.apollon.emdatapp.R;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.Gson;
 
 import java.io.UnsupportedEncodingException;
@@ -99,12 +100,16 @@ public class ScheduledJobService extends Service implements SensorEventListener 
     private Sensor sensor;
     private LocationManager locationManager;
 
+    private FirebaseAuth auth;
+
     private PhoneInfo phoneInfo = null;
     private SIMInfo simInfo = null;
     private Measure emMeasure = null;
     private NetworkMeasure networkMeasure = null;
     private GPSMeasure gpsMeasure = null;
     private ArrayList<WiFiMeasure> wiFiMeasures = null;
+
+    private String userEmail;
 
     private Report report = null;
 
@@ -121,6 +126,9 @@ public class ScheduledJobService extends Service implements SensorEventListener 
     public void onCreate() {
         super.onCreate();
         initializeListeners();
+
+        auth = FirebaseAuth.getInstance();
+        userEmail = auth.getCurrentUser().getEmail();
 
         HandlerThread handlerThread = new HandlerThread("background-thread");
         handlerThread.start();
@@ -260,7 +268,7 @@ public class ScheduledJobService extends Service implements SensorEventListener 
         } else {
             report.setWiFiEnabled(false);
         }
-
+        report.setUserID(userEmail);
         report.setTimestamp(getTimeStamp());
     }
 
