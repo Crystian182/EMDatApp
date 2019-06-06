@@ -234,6 +234,13 @@ public class ScheduledJobService extends Service implements SensorEventListener 
 
         startForeground(1, getNotification(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)));
 
+        if(intent.getAction() != null) {
+            if (intent.getAction().equals("stop")) {
+                stopForeground(true);
+                stopSelf();
+            }
+        }
+
         return START_NOT_STICKY;
     }
 

@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.location.LocationManager;
 import android.provider.Settings;
 import android.support.v4.app.ServiceCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,6 +21,8 @@ import com.apollon.emdatapp.Model.WiFiMeasure;
 import com.apollon.emdatapp.Service.ScheduledJobService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.Gson;
+
+import java.lang.invoke.ConstantCallSite;
 import java.util.ArrayList;
 
 public class InfoAnalysisActivity extends AppCompatActivity {
@@ -340,9 +343,6 @@ public class InfoAnalysisActivity extends AppCompatActivity {
         Intent intent = new Intent(this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
-
-        stopService(new Intent(InfoAnalysisActivity.this,ScheduledJobService.class));
-        finishAndRemoveTask();
 
     }
 
